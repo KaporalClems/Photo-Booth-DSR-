@@ -21,7 +21,7 @@
             color: #333; /* Couleur de texte foncée */
             
             /* Applique l'image en fond d'écran */
-            background-image: url('Cadre photo png.png'); /* Chemin vers ton image */
+            background-image: url('Cadre photo png.jpg'); /* Chemin vers ton image */
             background-size: cover; /* Couvre toute la zone, peut recadrer l'image */
             background-position: center center; /* Centre l'image */
             background-repeat: no-repeat; /* Ne répète pas l'image */
@@ -39,6 +39,7 @@
             border-radius: 8px; /* Coins arrondis */
             z-index: 1; /* Assure qu'il est en dessous du canvas et des boutons */
             /* La taille et la position (top, left, width, height) seront définies par JavaScript */
+            border: 2px solid red; /* BORDURE DE DÉBOGAGE : À SUPPRIMER UNE FOIS L'ALIGNEMENT PARFAIT */
         }
 
         /* Élément canvas pour dessiner la photo et le cadre */
@@ -47,6 +48,7 @@
             border-radius: 8px; /* Coins arrondis */
             z-index: 2; /* Au-dessus de la vidéo, en dessous des boutons */
             /* La taille et la position (top, left, width, height) seront définies par JavaScript */
+            border: 2px solid blue; /* BORDURE DE DÉBOGAGE : À SUPPRIMER UNE FOIS L'ALIGNEMENT PARFAIT */
         }
 
         /* Styles de base pour tous les boutons d'icônes */
@@ -270,13 +272,24 @@
 
         // Fonction pour calculer et définir la position et la taille de la webcam et du canvas
         function setWebcamAndCanvasPosition() {
-            const imgW = 720; // Largeur originale de Cadre photo png.jpg
-            const imgH = 960; // Hauteur originale de Cadre photo png.jpg
+            // --- VALEURS CLÉS À AJUSTER POUR VOTRE CADRE ---
+            // Ces valeurs représentent la taille originale de votre image de cadre (Cadre photo png.jpg)
+            // et les coordonnées (X, Y) ainsi que la largeur et la hauteur (Width, Height)
+            // de la zone transparente où la webcam doit apparaître, mesurées en pixels sur l'image originale.
+            // Utilisez un logiciel d'édition d'image (comme GIMP, Photoshop, ou même Paint)
+            // pour mesurer précisément ces valeurs.
+
+            const imgW = 720; // Largeur originale de votre image 'Cadre photo png.jpg' en pixels
+            const imgH = 960; // Hauteur originale de votre image 'Cadre photo png.jpg' en pixels
+
             // Coordonnées de la zone transparente du cadre dans l'image originale (en pixels)
-            const originalCutoutX = 100; 
-            const originalCutoutY = 280; 
-            const originalCutoutWidth = 520; 
-            const originalCutoutHeight = 400;
+            // Mesurez le coin supérieur gauche (X, Y) et la largeur/hauteur de cette zone.
+            const originalCutoutX = 100; // Par exemple : 100 pixels depuis le bord gauche de l'image
+            const originalCutoutY = 280; // Par exemple : 280 pixels depuis le bord supérieur de l'image
+            const originalCutoutWidth = 520; // Par exemple : la zone transparente a une largeur de 520 pixels
+            const originalCutoutHeight = 400; // Par exemple : la zone transparente a une hauteur de 400 pixels
+            // --- FIN DES VALEURS CLÉS À AJUSTER ---
+
 
             const vw = window.innerWidth;
             const vh = window.innerHeight;
@@ -401,7 +414,7 @@
                 // Crée un élément <a> temporaire pour le téléchargement
                 const link = document.createElement('a');
                 link.href = photoDataUrl; // L'URL de la photo
-                link.download = 'Ma_Photo_Souvenir_La_Reunion.png'; // Nom du fichier à télécharger
+                link.download = 'Ma_Photo_Souvenir_RDV_Vacances.png'; // Nom du fichier à télécharger
                 document.body.appendChild(link); // Ajoute le lien au corps du document
                 link.click(); // Simule un clic sur le lien pour déclencher le téléchargement
                 document.body.removeChild(link); // Supprime le lien temporaire
@@ -442,4 +455,3 @@
     </script>
 </body>
 </html>
-
