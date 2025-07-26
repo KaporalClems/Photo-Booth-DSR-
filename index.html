@@ -21,10 +21,10 @@
             color: #333; /* Couleur de texte foncée */
             
             /* Applique l'image en fond d'écran */
-            background-image: url('Cadre photo png.png'); /* Chemin vers ton image */
-            background-size: cover; /* Couvre toute la zone, peut recadrer l'image */
-            background-position: center center; /* Centre l'image */
-            background-repeat: no-repeat; /* Ne répète pas l'image */
+            background-image: url('Cadre photo png.png'); /* Chemin vers ton image de cadre */
+            background-size: cover; /* Couvre toute la zone du body, peut recadrer l'image */
+            background-position: center center; /* Centre l'image de fond */
+            background-repeat: no-repeat; /* Ne répète pas l'image de fond */
             background-attachment: fixed; /* Fixe l'image en arrière-plan lors du défilement */
             
             position: relative; /* Essentiel pour le positionnement absolu des enfants (webcam, canvas, boutons) */
@@ -39,7 +39,7 @@
             border-radius: 8px; /* Coins arrondis */
             z-index: 1; /* Assure qu'il est en dessous du canvas et des boutons */
             /* La taille et la position (top, left, width, height) seront définies par JavaScript */
-            border: 2px solid red; /* BORDURE DE DÉBOGAGE : À SUPPRIMER UNE FOIS L'ALIGNEMENT PARFAIT */
+            /* border: 2px solid red; -- BORDURE DE DÉBOGAGE : À SUPPRIMER UNE FOIS L'ALIGNEMENT PARFAIT */
         }
 
         /* Élément canvas pour dessiner la photo et le cadre */
@@ -48,7 +48,7 @@
             border-radius: 8px; /* Coins arrondis */
             z-index: 2; /* Au-dessus de la vidéo, en dessous des boutons */
             /* La taille et la position (top, left, width, height) seront définies par JavaScript */
-            border: 2px solid blue; /* BORDURE DE DÉBOGAGE : À SUPPRIMER UNE FOIS L'ALIGNEMENT PARFAIT */
+            /* border: 2px solid blue; -- BORDURE DE DÉBOGAGE : À SUPPRIMER UNE FOIS L'ALIGNEMENT PARFAIT */
         }
 
         /* Styles de base pour tous les boutons d'icônes */
@@ -273,14 +273,14 @@
         // Fonction pour calculer et définir la position et la taille de la webcam et du canvas
         function setWebcamAndCanvasPosition() {
             // --- VALEURS CLÉS À AJUSTER POUR VOTRE CADRE ---
-            // Ces valeurs représentent la taille originale de votre image de cadre (Cadre photo png.jpg)
+            // Ces valeurs représentent la taille originale de votre image de cadre (Cadre photo png.png)
             // et les coordonnées (X, Y) ainsi que la largeur et la hauteur (Width, Height)
             // de la zone transparente où la webcam doit apparaître, mesurées en pixels sur l'image originale.
             // Utilisez un logiciel d'édition d'image (comme GIMP, Photoshop, ou même Paint)
             // pour mesurer précisément ces valeurs.
 
-            const imgW = 720; // Largeur originale de votre image 'Cadre photo png.jpg' en pixels
-            const imgH = 960; // Hauteur originale de votre image 'Cadre photo png.jpg' en pixels
+            const imgW = 720; // Largeur originale de votre image 'Cadre photo png.png' en pixels
+            const imgH = 960; // Hauteur originale de votre image 'Cadre photo png.png' en pixels
 
             // Coordonnées de la zone transparente du cadre dans l'image originale (en pixels)
             // Mesurez le coin supérieur gauche (X, Y) et la largeur/hauteur de cette zone.
@@ -381,7 +381,7 @@
                 // Dessine le cadre sur toute la surface du canvas (qui est la zone de découpe)
                 context.drawImage(frameOverlay, 0, 0, photoCanvas.width, photoCanvas.height);
             } else {
-                console.warn("L'image du cadre n'est pas encore chargée ou est invalide. Assurez-vous que 'Cadre photo png.jpg' est dans le bon dossier.");
+                console.warn("L'image du cadre n'est pas encore chargée ou est invalide. Assurez-vous que 'Cadre photo png.png' est dans le bon dossier.");
                 alert("Le cadre n'a pas pu être appliqué. La photo a été prise sans cadre.");
             }
 
@@ -455,3 +455,4 @@
     </script>
 </body>
 </html>
+
