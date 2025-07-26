@@ -4,11 +4,11 @@ const urlsToCache = [
     '/index.html',
     'https://cdn.tailwindcss.com',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap',
-    'https://placehold.co/600x400/FF5733/FFFFFF?text=Cadre+1',
-    'https://placehold.co/600x400/33FF57/FFFFFF?text=Cadre+2',
-    'https://placehold.co/600x400/3357FF/FFFFFF?text=Cadre+3',
-    'https://placehold.co/192x192/4f46e5/FFFFFF?text=PB',
-    'https://placehold.co/512x512/4f46e5/FFFFFF?text=PB'
+    'https://placehold.co/600x400/FF5733/FFFFFF?text=Cadre+1', // Exemple de cadre 1
+    'https://placehold.co/600x400/33FF57/FFFFFF?text=Cadre+2', // Exemple de cadre 2
+    'https://placehold.co/600x400/3357FF/FFFFFF?text=Cadre+3',  // Exemple de cadre 3
+    'icon-192x192.png', // Chemin direct pour l'icône 192x192
+    'icon-512x512.png'  // Chemin direct pour l'icône 512x512
 ];
 
 self.addEventListener('install', (event) => {
