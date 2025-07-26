@@ -36,28 +36,28 @@
             position: relative;
         }
         .video-container {
-            position: relative;
+            position: relative; /* Nécessaire pour le positionnement absolu des enfants */
             width: 100%;
             max-width: 640px; /* Largeur maximale pour le conteneur vidéo */
-            height: auto; /* La hauteur sera définie par la vidéo */
+            padding-bottom: 66.7%; /* Force un ratio 3:2 (hauteur est 2/3 de la largeur) */
+            height: 0; /* Important: met la hauteur à 0 quand on utilise padding-bottom */
             border-radius: 1rem;
             background-color: #000;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            overflow: hidden; /* Assure que le cadre ne dépasse pas */
+            overflow: hidden; /* Assure que le contenu ne dépasse pas */
         }
-        video, canvas, #photoPreview {
-            width: 100%;
-            height: auto;
-            display: block; /* Supprime l'espace sous l'élément */
-            border-radius: 1rem; /* Assure les coins arrondis */
-        }
-        #frameOverlay {
-            position: absolute;
+        video, canvas, #photoPreview, #frameOverlay {
+            position: absolute; /* Positionne les enfants absolument dans le conteneur */
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-size: cover; /* CHANGEMENT ICI : 'cover' pour remplir la zone */
+            display: block;
+            border-radius: 1rem;
+            object-fit: cover; /* S'assure que la vidéo/photo remplit le conteneur, potentiellement en rognant */
+        }
+        #frameOverlay {
+            background-size: cover; /* 'cover' pour remplir la zone */
             background-repeat: no-repeat;
             background-position: center;
             pointer-events: none; /* Permet aux clics de passer à la vidéo en dessous */
@@ -206,7 +206,7 @@
 
         // Cadres par défaut (ajoutez plus d'URLs si vous en avez)
         const defaultFrames = [
-            'Cadre photo png.png', // Cadre doré
+            'Cadre photo png.png', // Cadre photo png
             'https://placehold.co/600x400/33FF57/FFFFFF?text=Cadre+2', // Exemple de cadre 2
             'https://placehold.co/600x400/3357FF/FFFFFF?text=Cadre+3'  // Exemple de cadre 3
         ];
@@ -287,10 +287,9 @@
 
                 // Assurez-vous que le canvas a les mêmes dimensions que la vidéo
                 video.addEventListener('loadedmetadata', () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    // Ajuster la hauteur du conteneur vidéo pour qu'elle corresponde
-                    video.parentElement.style.height = `${video.videoHeight}px`;
+                    // Les dimensions du canvas doivent correspondre aux dimensions rendues du conteneur vidéo
+                    canvas.width = video.offsetWidth;
+                    canvas.height = video.offsetHeight;
 
                     // Afficher l'overlay du cadre si un cadre est déjà sélectionné
                     if (selectedFrameSrc) {
@@ -315,11 +314,11 @@
             // Cacher l'overlay du cadre pendant la capture
             frameOverlay.style.display = 'none';
 
-            // Assurez-vous que le canvas a les bonnes dimensions
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            // Assurez-vous que le canvas a les bonnes dimensions (celles du conteneur vidéo)
+            canvas.width = video.offsetWidth;
+            canvas.height = video.offsetHeight;
 
-            // Dessiner la vidéo sur le canvas
+            // Dessiner la vidéo sur le canvas (elle sera étirée/rognée pour correspondre au ratio du canvas)
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             // Dessiner le cadre sur le canvas, en s'assurant qu'il couvre toute la zone
@@ -440,4 +439,5 @@
     </script>
 </body>
 </html>
+
 
