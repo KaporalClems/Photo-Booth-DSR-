@@ -8,7 +8,7 @@ const urlsToCache = [
     'https://placehold.co/600x400/33FF57/FFFFFF?text=Cadre+2', // Exemple de cadre 2
     'https://placehold.co/600x400/3357FF/FFFFFF?text=Cadre+3',  // Exemple de cadre 3
     'icon-192x192.png', // Chemin direct pour l'icône 192x192
-    'icon-512x512.png'  // Chemin direct pour l'icône 512x512
+    'Destination-Sud-Reunion-512X512.png'  // Chemin direct pour l'icône 512x512
 ];
 
 self.addEventListener('install', (event) => {
