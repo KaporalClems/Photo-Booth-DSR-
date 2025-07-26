@@ -3,360 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photo Booth DSR</title>
-    <!-- Tailwind CSS CDN pour un stylisme rapide et réactif -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Police Inter pour une meilleure lisibilité -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Lien vers le manifest de la PWA -->
-    <link rel="manifest" href="manifest.json">
+    <title>Photo Booth La Réunion</title>
+
+    <!-- Styles CSS intégrés -->
     <style>
+        /* Styles généraux pour le corps de la page */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; /* Couleur de fond par défaut */
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            color: #333;
-            /* Le cadre sera appliqué dynamiquement au canvas, pas au body */
-        }
-        .app-container {
-            position: relative; /* Pour positionner les éléments à l'intérieur */
-            width: 100%;
-            max-width: 744px; /* Largeur naturelle de votre cadre */
-            aspect-ratio: 744 / 1052; /* Ratio de votre cadre (largeur / hauteur) */
-            background-color: #000; /* Fond noir derrière la zone de la photo */
-            border-radius: 1.5rem; /* Coins arrondis pour l'ensemble */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            overflow: hidden; /* S'assure que le contenu ne dépasse pas */
-            display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            margin: 1.5rem; /* Marge autour du conteneur principal */
+            min-height: 100vh; /* Prend au moins toute la hauteur de la fenêtre */
+            margin: 0; /* Supprime les marges par défaut du corps */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Police de caractères moderne */
+            background-color: #e0f2f7; /* Un bleu clair apaisant pour l'arrière-plan */
+            color: #333; /* Couleur de texte foncée */
         }
-        #canvas, #photoPreview {
-            position: absolute; /* Le canvas et la photo preview remplissent le conteneur */
+
+        /* Conteneur principal de l'application Photo Booth */
+        .photo-booth-container {
+            background-color: #ffffff; /* Fond blanc pour le conteneur */
+            padding: 30px; /* Espacement interne */
+            border-radius: 12px; /* Coins arrondis */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Ombre portée pour un effet de profondeur */
+            text-align: center; /* Centre le texte et les éléments à l'intérieur */
+            max-width: 700px; /* Largeur maximale pour éviter un étirement excessif sur grands écrans */
+            width: 90%; /* S'adapte à la largeur de l'écran (responsive) */
+            border: 2px solid #007bff; /* Bordure thématique bleue */
+        }
+
+        /* Titre de l'application */
+        h1 {
+            color: #0056b3; /* Couleur bleue foncée pour le titre */
+            margin-bottom: 25px; /* Marge sous le titre */
+            font-size: 2em; /* Taille de police plus grande */
+        }
+
+        /* Conteneur pour la vidéo et le canvas */
+        .video-wrapper {
+            position: relative; /* Permet le positionnement absolu des enfants */
+            width: 100%; /* Prend toute la largeur disponible */
+            padding-bottom: 66.66%; /* Ratio 3:2 (hauteur = 2/3 de la largeur) pour la vidéo, ajuste si ta vidéo est 4:3 ou autre */
+            height: 0; /* Hauteur initiale à 0, la hauteur est gérée par padding-bottom */
+            margin-bottom: 25px; /* Marge sous le wrapper vidéo */
+            overflow: hidden; /* Cache tout ce qui dépasse */
+            border-radius: 8px; /* Coins arrondis */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* Légère ombre */
+        }
+
+        /* Élément vidéo de la webcam */
+        #webcam-feed {
+            position: absolute; /* Positionne l'élément par rapport à son parent (.video-wrapper) */
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            display: block; /* Supprime l'espace sous l'élément */
-            object-fit: contain; /* Assure que le contenu s'adapte sans déformation */
+            object-fit: cover; /* Assure que la vidéo remplit l'espace sans déformation */
+            transform: scaleX(-1); /* Effet miroir pour que l'utilisateur se voie comme dans un miroir */
+            border-radius: 8px; /* Coins arrondis */
         }
-        #video {
-            display: none; /* La vidéo est cachée, son flux est dessiné sur le canvas */
+
+        /* Élément canvas pour dessiner la photo et le cadre */
+        #photo-canvas {
+            position: absolute; /* Positionne l'élément par rapport à son parent (.video-wrapper) */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px; /* Coins arrondis */
+            /* Le canvas est transparent par défaut, on y dessinera la vidéo et le cadre */
         }
+
+        /* Conteneur des boutons de contrôle */
         .controls {
-            position: absolute;
-            bottom: 1rem; /* Positionne les contrôles en bas de l'app-container */
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            justify-content: center;
-            width: 90%; /* Prend une bonne partie de la largeur */
-            z-index: 10; /* S'assure que les boutons sont au-dessus du canvas */
+            display: flex; /* Utilise Flexbox pour aligner les boutons */
+            justify-content: center; /* Centre les boutons horizontalement */
+            gap: 20px; /* Espace entre les boutons */
+            margin-top: 20px; /* Marge au-dessus des boutons */
         }
-        button {
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.75rem; /* Coins arrondis pour les boutons */
-            font-weight: 600;
-            transition: all 0.2s ease-in-out;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+        /* Styles des boutons */
+        .controls button {
+            padding: 12px 25px; /* Espacement interne des boutons */
+            font-size: 1.1em; /* Taille de police des boutons */
+            cursor: pointer; /* Indique que l'élément est cliquable */
+            border: none; /* Supprime la bordure par défaut */
+            border-radius: 6px; /* Coins arrondis */
+            background-color: #28a745; /* Couleur verte pour "Prendre Photo" */
+            color: white; /* Texte blanc */
+            transition: background-color 0.3s ease, transform 0.1s ease; /* Transitions douces pour les effets */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Ombre par défaut */
         }
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+
+        /* Style spécifique pour le bouton "Télécharger" */
+        .controls button#download-btn {
+            background-color: #007bff; /* Couleur bleue pour "Télécharger" */
         }
-        .button-primary {
-            background-color: #4f46e5; /* Indigo */
-            color: white;
+
+        /* Effet au survol des boutons (sauf s'ils sont désactivés) */
+        .controls button:hover:not(:disabled) {
+            transform: translateY(-2px); /* Légère élévation au survol */
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15); /* Ombre plus prononcée au survol */
         }
-        .button-primary:hover {
-            background-color: #4338ca;
+
+        /* Effet au clic des boutons (sauf s'ils sont désactivés) */
+        .controls button:active:not(:disabled) {
+            transform: translateY(0); /* Retour à la position normale au clic */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Ombre plus légère au clic */
         }
-        .button-secondary {
-            background-color: #6b7280; /* Gris */
-            color: white;
+
+        /* Style des boutons désactivés */
+        .controls button:disabled {
+            background-color: #cccccc; /* Couleur grise pour les boutons désactivés */
+            cursor: not-allowed; /* Curseur "non autorisé" */
+            box-shadow: none; /* Pas d'ombre */
+            transform: none; /* Pas de transformation */
         }
-        .button-secondary:hover {
-            background-color: #4b5563;
-        }
-        .button-success {
-            background-color: #10b981; /* Vert */
-            color: white;
-        }
-        .button-success:hover {
-            background-color: #059669;
-        }
-        .message-box {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            text-align: center;
-            z-index: 1000;
-            display: none; /* Caché par défaut */
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-        .message-box button {
-            margin-top: 1rem;
-            background-color: #4f46e5;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-        }
-        .message-box button:hover {
-            background-color: #4338ca;
+
+        /* Ajustements responsifs pour les petits écrans (smartphones) */
+        @media (max-width: 600px) {
+            .photo-booth-container {
+                padding: 15px; /* Réduit le padding sur les petits écrans */
+            }
+
+            h1 {
+                font-size: 1.5em; /* Réduit la taille du titre */
+            }
+
+            .controls {
+                flex-direction: column; /* Les boutons s'empilent verticalement */
+                gap: 10px; /* Réduit l'espace entre les boutons empilés */
+            }
+
+            .controls button {
+                width: 100%; /* Les boutons prennent toute la largeur disponible */
+            }
         }
     </style>
+
+    <!-- Manifest de l'application pour PWA (Progressive Web App) -->
+    <!-- Ce fichier doit être créé séparément dans le même dossier -->
+    <link rel="manifest" href="manifest.json">
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
-
-    <div class="app-container">
-        <h1 class="text-3xl font-bold text-indigo-700 mb-4 absolute top-4 z-10" style="color: #4f46e5; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">Photo Booth DSR</h1>
-
-        <div id="messageBox" class="message-box">
-            <p id="messageText"></p>
-            <button onclick="hideMessageBox()">OK</button>
+<body>
+    <div class="photo-booth-container">
+        <h1>Photo Booth La Réunion</h1>
+        
+        <div class="video-wrapper">
+            <!-- Élément vidéo pour afficher le flux de la webcam -->
+            <video id="webcam-feed" autoplay playsinline></video>
+            <!-- Élément canvas où la photo sera capturée et le cadre appliqué -->
+            <canvas id="photo-canvas"></canvas>
+            <!-- L'image du cadre est chargée ici mais cachée. Elle sera dessinée sur le canvas via JavaScript. -->
+            <img id="frame-overlay" src="Cadre photo png.jpg" alt="Cadre Photo" style="display: none;">
         </div>
 
-        <video id="video" playsinline></video>
-        <canvas id="canvas"></canvas>
-        <img id="photoPreview" class="hidden" alt="Photo prise">
-
         <div class="controls">
-            <button id="startCameraButton" class="button-primary">Ouvrir la Caméra</button>
-            <button id="takePhotoButton" class="button-primary hidden">Prendre la Photo</button>
-            <button id="downloadPhotoButton" class="button-success hidden">Télécharger la Photo</button>
-            <button id="retakePhotoButton" class="button-secondary hidden">Reprendre</button>
+            <!-- Bouton pour prendre la photo -->
+            <button id="take-photo-btn">Prendre Photo</button>
+            <!-- Bouton pour télécharger la photo, désactivé par défaut -->
+            <button id="download-btn" disabled>Télécharger</button>
         </div>
     </div>
 
+    <!-- Logique JavaScript intégrée -->
     <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const context = canvas.getContext('2d');
-        const photoPreview = document.getElementById('photoPreview');
-        const startCameraButton = document.getElementById('startCameraButton');
-        const takePhotoButton = document.getElementById('takePhotoButton');
-        const downloadPhotoButton = document.getElementById('downloadPhotoButton');
-        const retakePhotoButton = document.getElementById('retakePhotoButton');
-        const appContainer = document.querySelector('.app-container');
+        // Récupération des éléments du DOM
+        const webcamFeed = document.getElementById('webcam-feed');
+        const photoCanvas = document.getElementById('photo-canvas');
+        const context = photoCanvas.getContext('2d'); // Contexte de dessin 2D du canvas
+        const takePhotoBtn = document.getElementById('take-photo-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const frameOverlay = document.getElementById('frame-overlay'); // L'élément <img> du cadre
 
-        let currentStream;
-        let capturedPhotoBlob = null;
-        let mainFrameImage = new Image();
-        // Assurez-vous que le chemin de l'image est correct par rapport à votre déploiement GitHub
-        mainFrameImage.src = 'Cadre photo png.jpg';
+        let stream; // Variable pour stocker le flux vidéo de la webcam
+        let photoDataUrl; // Variable pour stocker l'URL de la photo prise (format base64)
 
-        // Coordonnées du "trou" transparent dans votre image de cadre (estimées en pixels pour une image de 744x1052)
-        // Ces valeurs sont cruciales et peuvent nécessiter un ajustement fin si le cadre n'apparaît pas parfaitement aligné.
-        const HOLE_X = 111; // Position X du coin supérieur gauche du trou
-        const HOLE_Y = 263; // Position Y du coin supérieur gauche du trou
-        const HOLE_WIDTH = 520; // Largeur du trou
-        const HOLE_HEIGHT = 473; // Hauteur du trou
-
-        // Fonction pour afficher une boîte de message personnalisée
-        function showMessageBox(message) {
-            const messageBox = document.getElementById('messageBox');
-            const messageText = document.getElementById('messageText');
-            messageText.textContent = message;
-            messageBox.style.display = 'block';
-        }
-
-        // Fonction pour masquer la boîte de message
-        function hideMessageBox() {
-            document.getElementById('messageBox').style.display = 'none';
-        }
-
-        // Dessine le cadre principal sur le canvas
-        function drawMainFrame() {
-            // S'assurer que le canvas a les dimensions de l'image du cadre pour un rendu optimal
-            canvas.width = mainFrameImage.naturalWidth;
-            canvas.height = mainFrameImage.naturalHeight;
-
-            // Dessiner le cadre en premier
-            context.drawImage(mainFrameImage, 0, 0, canvas.width, canvas.height);
-        }
-
-        // Fonction pour démarrer la caméra
-        startCameraButton.addEventListener('click', async () => {
+        // Fonction asynchrone pour démarrer la webcam
+        async function startWebcam() {
             try {
-                // Demander l'accès à la caméra
-                currentStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); // 'environment' pour la caméra arrière
-                video.srcObject = currentStream;
-                video.play();
-
-                // Cacher le bouton "Ouvrir la Caméra" et montrer "Prendre la Photo"
-                startCameraButton.classList.add('hidden');
-                takePhotoButton.classList.remove('hidden');
-                photoPreview.classList.add('hidden'); // Cacher la photo précédente
-                downloadPhotoButton.classList.add('hidden');
-                retakePhotoButton.classList.add('hidden');
-                canvas.classList.remove('hidden'); // S'assurer que le canvas est visible
-
-                // Dessiner le cadre sur le canvas dès que la caméra est prête
-                mainFrameImage.onload = () => {
-                    drawMainFrame();
-                    // Commencer à dessiner le flux vidéo sur le canvas
-                    requestAnimationFrame(drawVideoOnCanvas);
+                // Demande l'accès à la caméra de l'utilisateur (frontale)
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                webcamFeed.srcObject = stream; // Associe le flux à l'élément vidéo
+                webcamFeed.onloadedmetadata = () => {
+                    // Une fois que la vidéo est chargée et que ses métadonnées sont disponibles
+                    // Ajuste la taille du canvas pour qu'elle corresponde à la résolution de la vidéo
+                    photoCanvas.width = webcamFeed.videoWidth;
+                    photoCanvas.height = webcamFeed.videoHeight;
+                    console.log(`Webcam feed dimensions: ${webcamFeed.videoWidth}x${webcamFeed.videoHeight}`);
+                    console.log(`Canvas dimensions set to: ${photoCanvas.width}x${photoCanvas.height}`);
                 };
-                // Si l'image est déjà chargée, dessiner immédiatement
-                if (mainFrameImage.complete) {
-                    drawMainFrame();
-                    requestAnimationFrame(drawVideoOnCanvas);
-                }
-
-            } catch (err) {
-                console.error("Erreur d'accès à la caméra: ", err);
-                showMessageBox("Impossible d'accéder à la caméra. Veuillez autoriser l'accès.");
-            }
-        });
-
-        // Fonction pour dessiner le flux vidéo en continu sur le canvas
-        function drawVideoOnCanvas() {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                // Dessiner d'abord le cadre pour effacer le contenu précédent et s'assurer qu'il est en arrière-plan
-                drawMainFrame();
-
-                // Calculer les dimensions pour dessiner la vidéo dans le "trou" avec object-fit: cover
-                let sx, sy, sWidth, sHeight; // Source (vidéo)
-                let dx, dy, dWidth, dHeight; // Destination (canvas, le trou)
-
-                // Dimensions de destination (le trou dans le cadre)
-                dx = HOLE_X;
-                dy = HOLE_Y;
-                dWidth = HOLE_WIDTH;
-                dHeight = HOLE_HEIGHT;
-
-                // Calculer les dimensions source pour "couvrir" le trou avec la vidéo
-                const holeAspectRatio = dWidth / dHeight;
-                const videoAspectRatio = video.videoWidth / video.videoHeight;
-
-                if (videoAspectRatio > holeAspectRatio) {
-                    // La vidéo est plus large que le trou, couper en haut/bas de la vidéo
-                    sHeight = video.videoHeight;
-                    sWidth = sHeight * holeAspectRatio;
-                    sx = (video.videoWidth - sWidth) / 2;
-                    sy = 0;
-                } else {
-                    // La vidéo est plus haute que le trou, couper à gauche/droite de la vidéo
-                    sWidth = video.videoWidth;
-                    sHeight = sWidth / holeAspectRatio;
-                    sx = 0;
-                    sy = (video.videoHeight - sHeight) / 2;
-                }
-
-                // Dessiner la vidéo dans le trou du cadre
-                context.drawImage(video, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
-            }
-            // Continuer l'animation
-            if (!video.classList.contains('hidden')) { // S'assurer que la vidéo est toujours active
-                 requestAnimationFrame(drawVideoOnCanvas);
+            } catch (error) {
+                // Gère les erreurs si l'accès à la webcam est refusé ou impossible
+                console.error("Erreur d'accès à la webcam :", error);
+                alert("Impossible d'accéder à votre webcam. Veuillez vérifier les permissions de votre navigateur et assurez-vous que le site est servi via HTTPS.");
             }
         }
 
-        // Fonction pour prendre la photo
-        takePhotoButton.addEventListener('click', () => {
-            // Le canvas contient déjà le cadre et la vidéo correctement dessinés
-            // Arrêter le flux de la caméra
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
+        // Écouteur d'événement pour le bouton "Prendre Photo"
+        takePhotoBtn.addEventListener('click', () => {
+            if (!stream) {
+                // Empêche de prendre une photo si la webcam n'est pas démarrée
+                alert("La webcam n'est pas démarrée. Veuillez patienter ou recharger la page.");
+                return;
             }
 
-            // Afficher la photo finale sur l'élément img
-            photoPreview.src = canvas.toDataURL('image/png');
-            photoPreview.classList.remove('hidden');
-            canvas.classList.add('hidden'); // Cacher le canvas une fois la photo prise
+            // 1. Nettoie le canvas avant de dessiner
+            context.clearRect(0, 0, photoCanvas.width, photoCanvas.height);
+            
+            // 2. Dessine le flux vidéo de la webcam sur le canvas
+            // Applique la transformation miroir pour que la photo corresponde à ce que l'utilisateur voit
+            context.save(); // Sauvegarde l'état actuel du contexte
+            context.scale(-1, 1); // Applique un miroir horizontal
+            // Dessine l'image de la vidéo sur le canvas. Le '-photoCanvas.width' est dû à la transformation miroir.
+            context.drawImage(webcamFeed, -photoCanvas.width, 0, photoCanvas.width, photoCanvas.height);
+            context.restore(); // Restaure l'état du contexte (supprime la transformation miroir pour les dessins suivants)
 
-            // Mettre à jour les boutons
-            takePhotoButton.classList.add('hidden');
-            downloadPhotoButton.classList.remove('hidden');
-            retakePhotoButton.classList.remove('hidden');
+            // 3. Dessine le cadre par-dessus la photo
+            // Vérifie que l'image du cadre est bien chargée avant de la dessiner
+            if (frameOverlay.complete && frameOverlay.naturalWidth > 0) {
+                // IMPORTANT : Ajuste ces valeurs (frameX, frameY, frameWidth, frameHeight)
+                // pour que ton cadre s'adapte parfaitement à ton image 'Cadre photo png.jpg'
+                // et à la zone où tu veux qu'il apparaisse sur la photo finale.
 
-            // Stocker le Blob pour le téléchargement
-            canvas.toBlob(blob => {
-                capturedPhotoBlob = blob;
-            }, 'image/png');
-        });
+                // Si ton cadre PNG est conçu pour couvrir toute la surface du canvas
+                // avec des zones transparentes pour la photo, utilise ces valeurs:
+                const frameX = 0;
+                const frameY = 0;
+                const frameWidth = photoCanvas.width;
+                const frameHeight = photoCanvas.height;
+                
+                // Si ton cadre est plus petit et doit être centré ou positionné spécifiquement,
+                // tu devras calculer ces valeurs. Par exemple:
+                /*
+                const framePadding = 50; // Marge intérieure du cadre
+                const frameX = framePadding;
+                const frameY = framePadding;
+                const frameWidth = photoCanvas.width - (2 * framePadding);
+                const frameHeight = photoCanvas.height - (2 * framePadding);
+                */
 
-        // Fonction pour télécharger la photo
-        downloadPhotoButton.addEventListener('click', () => {
-            if (capturedPhotoBlob) {
-                const url = URL.createObjectURL(capturedPhotoBlob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'photobooth_dsr.png';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url); // Libérer l'URL de l'objet
-                showMessageBox("Photo téléchargée !");
+                context.drawImage(frameOverlay, frameX, frameY, frameWidth, frameHeight);
             } else {
-                showMessageBox("Aucune photo à télécharger.");
+                console.warn("L'image du cadre n'est pas encore chargée ou est invalide. Assurez-vous que 'Cadre photo png.jpg' est dans le bon dossier.");
+                alert("Le cadre n'a pas pu être appliqué. La photo a été prise sans cadre.");
+            }
+
+            // 4. Récupère la photo finale du canvas sous forme d'URL de données (Base64)
+            photoDataUrl = photoCanvas.toDataURL('image/png');
+            downloadBtn.disabled = false; // Active le bouton de téléchargement
+        });
+
+        // Écouteur d'événement pour le bouton "Télécharger"
+        downloadBtn.addEventListener('click', () => {
+            if (photoDataUrl) {
+                // Crée un élément <a> temporaire pour le téléchargement
+                const link = document.createElement('a');
+                link.href = photoDataUrl; // L'URL de la photo
+                link.download = 'Ma_Photo_Souvenir_La_Reunion.png'; // Nom du fichier à télécharger
+                document.body.appendChild(link); // Ajoute le lien au corps du document
+                link.click(); // Simule un clic sur le lien pour déclencher le téléchargement
+                document.body.removeChild(link); // Supprime le lien temporaire
             }
         });
 
-        // Fonction pour reprendre une photo
-        retakePhotoButton.addEventListener('click', () => {
-            // Réinitialiser l'état
-            photoPreview.classList.add('hidden');
-            downloadPhotoButton.classList.add('hidden');
-            retakePhotoButton.classList.add('hidden');
-            startCameraButton.classList.remove('hidden'); // Montrer le bouton pour redémarrer la caméra
-            capturedPhotoBlob = null; // Réinitialiser le blob de la photo
-            canvas.classList.remove('hidden'); // Afficher le canvas pour le prochain démarrage de la caméra
+        // Démarrer la webcam automatiquement au chargement complet de la page
+        window.addEventListener('load', startWebcam);
 
-            // Redessiner le cadre sur le canvas pour un état initial propre
-            drawMainFrame();
+        // Arrêter le flux de la webcam lorsque l'utilisateur quitte ou ferme la page
+        window.addEventListener('beforeunload', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop()); // Arrête toutes les pistes du flux
+            }
         });
 
-        // Initialiser l'affichage du cadre sur le canvas au chargement
-        mainFrameImage.onerror = () => {
-            console.error("Erreur de chargement de l'image du cadre principal: Cadre photo png.jpg");
-            showMessageBox("Impossible de charger l'image du cadre principal. Veuillez vérifier le chemin.");
-        };
-
-        // Dessiner le cadre initialement (avant le démarrage de la caméra)
-        mainFrameImage.onload = () => {
-            drawMainFrame();
-        };
-        // Si l'image est déjà chargée (par exemple, depuis le cache), dessiner immédiatement
-        if (mainFrameImage.complete) {
-            drawMainFrame();
-        }
-
-        // Enregistrement du Service Worker pour la PWA
-        // Ce bloc de code est commenté pour éviter les erreurs dans l'environnement de prévisualisation.
-        // DÉCOMMENTEZ-LE LORS DU DÉPLOIEMENT SUR UN SERVEUR WEB (comme GitHub Pages)
-        // pour que la PWA fonctionne pleinement et offre des fonctionnalités hors ligne.
-        /*
+        // Enregistrement du Service Worker (pour la fonctionnalité PWA)
+        // Vérifie si le navigateur supporte les Service Workers
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
+                // Tente d'enregistrer le Service Worker
+                navigator.serviceWorker.register('/sw.js')
                     .then(registration => {
-                        console.log('ServiceWorker enregistré avec succès:', registration.scope);
+                        console.log('Service Worker enregistré avec succès:', registration);
                     })
                     .catch(error => {
-                        console.error('Échec de l\'enregistrement du ServiceWorker:', error);
+                        console.error('Échec de l\'enregistrement du Service Worker:', error);
                     });
             });
         }
-        */
     </script>
 </body>
 </html>
-
