@@ -18,70 +18,40 @@
             min-height: 100vh; /* Prend au moins toute la hauteur de la fenêtre */
             margin: 0; /* Supprime les marges par défaut du corps */
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Police de caractères moderne */
+            color: #333; /* Couleur de texte foncée */
+            
             /* Applique l'image en fond d'écran */
-            background-image: url('Cadre photo png.png'); /* Chemin vers ton image */
+            background-image: url('Cadre photo png.jpg'); /* Chemin vers ton image */
             background-size: cover; /* Couvre toute la zone, peut recadrer l'image */
             background-position: center center; /* Centre l'image */
             background-repeat: no-repeat; /* Ne répète pas l'image */
             background-attachment: fixed; /* Fixe l'image en arrière-plan lors du défilement */
-            color: #333; /* Couleur de texte foncée */
-        }
-
-        /* Conteneur principal de l'application Photo Booth */
-        .photo-booth-container {
-            background-color: rgba(255, 255, 255, 0.9); /* Fond blanc semi-transparent */
-            padding: 20px; /* Espacement interne */
-            border-radius: 12px; /* Coins arrondis */
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Ombre portée pour un effet de profondeur */
-            text-align: center; /* Centre le texte et les éléments à l'intérieur */
-            max-width: 500px; /* Largeur maximale ajustée pour mieux correspondre au cadre portrait */
-            width: 90%; /* S'adapte à la largeur de l'écran (responsive) */
-            /* border: 2px solid #007bff; -- Supprimé comme demandé */
-            display: flex; /* Utilise flexbox pour l'agencement interne */
-            flex-direction: column; /* Les éléments s'empilent verticalement */
-            align-items: center; /* Centre les éléments horizontalement */
-        }
-
-        /* Conteneur pour la vidéo, le canvas et les boutons */
-        .video-wrapper {
-            position: relative; /* Permet le positionnement absolu des enfants */
-            width: 100%; /* Prend toute la largeur disponible */
-            /* Ratio d'aspect ajusté pour correspondre au cadre (720x960 -> 3:4 portrait) */
-            padding-bottom: calc(960 / 720 * 100%); /* Hauteur = 4/3 de la largeur */
-            height: 0; /* Hauteur initiale à 0, la hauteur est gérée par padding-bottom */
-            /* margin-bottom: 25px; Supprimé car les boutons sont maintenant à l'intérieur */
-            overflow: hidden; /* Cache tout ce qui dépasse */
-            border-radius: 8px; /* Coins arrondis */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* Légère ombre */
+            
+            position: relative; /* Essentiel pour le positionnement absolu des enfants (webcam, canvas, boutons) */
+            overflow: hidden; /* Empêche les barres de défilement si les éléments dépassent */
         }
 
         /* Élément vidéo de la webcam */
         #webcam-feed {
-            position: absolute; /* Positionne l'élément par rapport à son parent (.video-wrapper) */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: absolute; /* Positionné absolument par rapport au body */
             object-fit: cover; /* Assure que la vidéo remplit l'espace sans déformation */
             transform: scaleX(-1); /* Effet miroir pour que l'utilisateur se voie comme dans un miroir */
             border-radius: 8px; /* Coins arrondis */
-            z-index: 1; /* Assure qu'il est en dessous du cadre et des boutons */
+            z-index: 1; /* Assure qu'il est en dessous du canvas et des boutons */
+            /* La taille et la position (top, left, width, height) seront définies par JavaScript */
         }
 
         /* Élément canvas pour dessiner la photo et le cadre */
         #photo-canvas {
-            position: absolute; /* Positionne l'élément par rapport à son parent (.video-wrapper) */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: absolute; /* Positionné absolument par rapport au body */
             border-radius: 8px; /* Coins arrondis */
             z-index: 2; /* Au-dessus de la vidéo, en dessous des boutons */
+            /* La taille et la position (top, left, width, height) seront définies par JavaScript */
         }
 
         /* Styles de base pour tous les boutons d'icônes */
         .icon-button {
-            position: absolute;
+            position: absolute; /* Positionné absolument par rapport au body */
             background-color: rgba(0, 0, 0, 0.5); /* Fond semi-transparent */
             color: white;
             border: none;
@@ -95,7 +65,7 @@
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.1s ease;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            z-index: 3; /* Au-dessus du canvas */
+            z-index: 10; /* Au-dessus de tout */
         }
 
         .icon-button:hover {
@@ -115,7 +85,8 @@
 
         /* Positionnement du bouton de prise de photo (icône caméra) */
         #take-photo-btn {
-            bottom: 60px; /* Positionné plus haut pour être sur le cadre */
+            /* Ces valeurs sont des estimations basées sur le cadre, à ajuster si nécessaire */
+            bottom: 10vh; /* Positionné plus haut pour être sur le cadre */
             left: 50%;
             transform: translateX(-50%);
             background-color: #28a745; /* Vert */
@@ -126,7 +97,8 @@
 
         /* Positionnement du bouton de changement de caméra (icône flip) */
         #flip-camera-btn {
-            top: 30px; /* Positionné en haut du cadre */
+            /* Ces valeurs sont des estimations basées sur le cadre, à ajuster si nécessaire */
+            top: 5vh; /* Positionné en haut du cadre */
             left: 50%;
             transform: translateX(-50%);
             background-color: #007bff; /* Bleu */
@@ -137,9 +109,10 @@
 
         /* Positionnement du bouton de téléchargement (texte "TÉLÉCHARGER") */
         #download-btn {
-            position: absolute; /* Positionné par rapport à .video-wrapper */
-            bottom: 20px; /* 20px du bas du cadre */
-            right: 20px; /* 20px de la droite du cadre */
+            position: absolute; /* Positionné absolument par rapport au body */
+            /* Ces valeurs sont des estimations basées sur le cadre, à ajuster si nécessaire */
+            bottom: 5vh; /* 5% de la hauteur de la fenêtre du bas */
+            right: 5vw; /* 5% de la largeur de la fenêtre de la droite */
             padding: 10px 20px;
             font-size: 1em;
             cursor: pointer;
@@ -149,7 +122,7 @@
             color: #333; /* Texte foncé pour le contraste */
             transition: background-color 0.3s ease, transform 0.1s ease;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            z-index: 3; /* Au-dessus du canvas */
+            z-index: 10; /* Au-dessus de tout */
         }
         #download-btn:hover:not(:disabled) {
             background-color: #e0a800;
@@ -169,10 +142,6 @@
 
         /* Ajustements responsifs pour les petits écrans (smartphones) */
         @media (max-width: 600px) {
-            .photo-booth-container {
-                padding: 15px; /* Réduit le padding sur les petits écrans */
-            }
-
             .icon-button {
                 width: 45px;
                 height: 45px;
@@ -180,14 +149,14 @@
             }
 
             #take-photo-btn {
-                bottom: 40px; /* Ajuste la position des boutons */
+                bottom: 8vh; /* Ajuste la position des boutons */
             }
             #flip-camera-btn {
-                top: 20px;
+                top: 4vh;
             }
             #download-btn {
-                bottom: 15px;
-                right: 15px;
+                bottom: 4vh;
+                right: 4vw;
                 padding: 8px 15px;
                 font-size: 0.9em;
             }
@@ -199,30 +168,25 @@
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
-    <div class="photo-booth-container">
-        
-        <div class="video-wrapper">
-            <!-- Élément vidéo pour afficher le flux de la webcam -->
-            <video id="webcam-feed" autoplay playsinline></video>
-            <!-- Élément canvas où la photo sera capturée et le cadre appliqué -->
-            <canvas id="photo-canvas"></canvas>
-            <!-- L'image du cadre est chargée ici mais cachée. Elle sera dessinée sur le canvas via JavaScript. -->
-            <img id="frame-overlay" src="Cadre photo png.jpg" alt="Cadre Photo" style="display: none;">
+    <!-- Webcam feed et canvas sont maintenant des enfants directs du body -->
+    <video id="webcam-feed" autoplay playsinline></video>
+    <canvas id="photo-canvas"></canvas>
+    <!-- L'image du cadre est toujours chargée mais cachée. Elle est utilisée par le JS pour le dessin sur le canvas. -->
+    <img id="frame-overlay" src="Cadre photo png.png" alt="Cadre Photo" style="display: none;">
 
-            <!-- Bouton pour prendre la photo (icône caméra) -->
-            <button id="take-photo-btn" class="icon-button">
-                <i class="fas fa-camera"></i>
-            </button>
+    <!-- Boutons sont aussi des enfants directs du body -->
+    <!-- Bouton pour prendre la photo (icône caméra) -->
+    <button id="take-photo-btn" class="icon-button">
+        <i class="fas fa-camera"></i>
+    </button>
 
-            <!-- Bouton pour changer de caméra (icône flip) -->
-            <button id="flip-camera-btn" class="icon-button">
-                <i class="fas fa-sync-alt"></i>
-            </button>
+    <!-- Bouton pour changer de caméra (icône flip) -->
+    <button id="flip-camera-btn" class="icon-button">
+        <i class="fas fa-sync-alt"></i>
+    </button>
 
-            <!-- Bouton pour télécharger la photo (texte "TÉLÉCHARGER") -->
-            <button id="download-btn" disabled>TÉLÉCHARGER</button>
-        </div>
-    </div>
+    <!-- Bouton pour télécharger la photo (texte "TÉLÉCHARGER") -->
+    <button id="download-btn" disabled>TÉLÉCHARGER</button>
 
     <!-- Logique JavaScript intégrée -->
     <script>
@@ -291,12 +255,9 @@
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
                 webcamFeed.srcObject = stream; // Associe le flux à l'élément vidéo
                 webcamFeed.onloadedmetadata = () => {
-                    // Une fois que la vidéo est chargée et que ses métadonnées sont disponibles
-                    // Ajuste la taille du canvas pour qu'elle corresponde à la résolution de la vidéo
-                    photoCanvas.width = webcamFeed.videoWidth;
-                    photoCanvas.height = webcamFeed.videoHeight;
-                    console.log(`Webcam feed dimensions: ${webcamFeed.videoWidth}x${webcamFeed.videoHeight}`);
-                    console.log(`Canvas dimensions set to: ${photoCanvas.width}x${photoCanvas.height}`);
+                    // Les dimensions du canvas seront définies par setWebcamAndCanvasPosition
+                    // pour correspondre à la zone du cadre.
+                    console.log(`Webcam feed native dimensions: ${webcamFeed.videoWidth}x${webcamFeed.videoHeight}`);
                 };
             } catch (error) {
                 console.error("Erreur d'accès à la webcam :", error);
@@ -305,6 +266,66 @@
                 takePhotoBtn.disabled = true;
                 flipCameraBtn.disabled = true;
             }
+        }
+
+        // Fonction pour calculer et définir la position et la taille de la webcam et du canvas
+        function setWebcamAndCanvasPosition() {
+            const imgW = 720; // Largeur originale de Cadre photo png.jpg
+            const imgH = 960; // Hauteur originale de Cadre photo png.jpg
+            // Coordonnées de la zone transparente du cadre dans l'image originale (en pixels)
+            const originalCutoutX = 100; 
+            const originalCutoutY = 280; 
+            const originalCutoutWidth = 520; 
+            const originalCutoutHeight = 400;
+
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+
+            const aspectRatioBody = vw / vh;
+            const aspectRatioImg = imgW / imgH;
+
+            let renderedImgW, renderedImgH;
+
+            // Calcule la taille réelle de l'image de fond après application de background-size: cover
+            if (aspectRatioBody > aspectRatioImg) {
+                // Le viewport est plus large que l'image, l'image remplit la hauteur du viewport
+                renderedImgH = vh;
+                renderedImgW = vh * aspectRatioImg;
+            } else {
+                // Le viewport est plus haut ou a le même aspect ratio que l'image, l'image remplit la largeur du viewport
+                renderedImgW = vw;
+                renderedImgH = vw / aspectRatioImg;
+            }
+
+            // Calcule les décalages pour centrer l'image de fond
+            const offsetX = (vw - renderedImgW) / 2; // Décalage gauche
+            const offsetY = (vh - renderedImgH) / 2; // Décalage haut
+
+            // Calcule le facteur d'échelle de l'image de fond
+            const scaleFactor = renderedImgW / imgW; 
+
+            // Calcule les dimensions finales et la position de la zone de découpe sur l'écran
+            const finalCutoutX = offsetX + originalCutoutX * scaleFactor;
+            const finalCutoutY = offsetY + originalCutoutY * scaleFactor;
+            const finalCutoutWidth = originalCutoutWidth * scaleFactor;
+            const finalCutoutHeight = originalCutoutHeight * scaleFactor;
+
+            // Applique les styles calculés à la webcam et au canvas
+            webcamFeed.style.left = `${finalCutoutX}px`;
+            webcamFeed.style.top = `${finalCutoutY}px`;
+            webcamFeed.style.width = `${finalCutoutWidth}px`;
+            webcamFeed.style.height = `${finalCutoutHeight}px`;
+
+            photoCanvas.style.left = `${finalCutoutX}px`;
+            photoCanvas.style.top = `${finalCutoutY}px`;
+            photoCanvas.style.width = `${finalCutoutWidth}px`;
+            photoCanvas.style.height = `${finalCutoutHeight}px`;
+
+            // Met à jour les dimensions du canvas pour le dessin
+            photoCanvas.width = finalCutoutWidth;
+            photoCanvas.height = finalCutoutHeight;
+
+            console.log(`Webcam/Canvas positioned at: ${finalCutoutX}x${finalCutoutY} with size ${finalCutoutWidth}x${finalCutoutHeight}`);
         }
 
         // Écouteur d'événement pour le bouton "Prendre Photo"
@@ -317,64 +338,41 @@
             // 1. Nettoie le canvas avant de dessiner
             context.clearRect(0, 0, photoCanvas.width, photoCanvas.height);
             
-            // 2. Dessine le cadre sur toute la surface du canvas (il sera la base)
+            // 2. Dessine le flux vidéo de la webcam sur le canvas (qui est déjà dimensionné à la zone de découpe)
+            const videoAspectRatio = webcamFeed.videoWidth / webcamFeed.videoHeight;
+            const canvasAspectRatio = photoCanvas.width / photoCanvas.height;
+
+            let drawVideoWidth, drawVideoHeight, drawVideoX, drawVideoY;
+
+            if (videoAspectRatio > canvasAspectRatio) {
+                // La vidéo est plus large que la zone du canvas, on ajuste la hauteur et on centre la largeur
+                drawVideoHeight = photoCanvas.height;
+                drawVideoWidth = photoCanvas.height * videoAspectRatio;
+                drawVideoX = (photoCanvas.width - drawVideoWidth) / 2;
+                drawVideoY = 0;
+            } else {
+                // La vidéo est plus haute que la zone du canvas, on ajuste la largeur et on centre la hauteur
+                drawVideoWidth = photoCanvas.width;
+                drawVideoHeight = photoCanvas.width / videoAspectRatio;
+                drawVideoX = 0;
+                drawVideoY = (photoCanvas.height - drawVideoHeight) / 2;
+            }
+
+            // Dessine le flux webcam SANS l'effet miroir pour la photo finale
+            // L'effet miroir est géré uniquement par le CSS de #webcam-feed pour la prévisualisation en direct.
+            context.drawImage(webcamFeed, drawVideoX, drawVideoY, drawVideoWidth, drawVideoHeight);
+
+            // 3. Dessine le cadre par-dessus la photo sur le canvas
             // Vérifie que l'image du cadre est bien chargée avant de la dessiner
             if (frameOverlay.complete && frameOverlay.naturalWidth > 0) {
-                // Dessine le cadre sur toute la surface du canvas
+                // Dessine le cadre sur toute la surface du canvas (qui est la zone de découpe)
                 context.drawImage(frameOverlay, 0, 0, photoCanvas.width, photoCanvas.height);
-
-                // 3. Calcule les dimensions de la zone où la webcam doit être dessinée
-                // Ces valeurs sont des estimations basées sur l'image 'Cadre photo png.jpg' (720x960 pixels)
-                // et représentent la zone transparente du cadre.
-                // Ajuste ces valeurs pour qu'elles correspondent EXACTEMENT à la zone transparente de ton PNG.
-                const originalFrameWidth = 720;
-                const originalFrameHeight = 960;
-                const originalCutoutX = 100; // Position X du début de la zone transparente
-                const originalCutoutY = 280; // Position Y du début de la zone transparente
-                const originalCutoutWidth = 520; // Largeur de la zone transparente
-                const originalCutoutHeight = 400; // Hauteur de la zone transparente
-
-                // Calcule le facteur d'échelle pour adapter les coordonnées originales à la taille actuelle du canvas
-                const scaleFactor = photoCanvas.width / originalFrameWidth;
-
-                const targetX = originalCutoutX * scaleFactor;
-                const targetY = originalCutoutY * scaleFactor;
-                const targetWidth = originalCutoutWidth * scaleFactor;
-                const targetHeight = originalCutoutHeight * scaleFactor;
-
-                // 4. Dessine le flux vidéo de la webcam dans la zone calculée, en maintenant son ratio d'aspect
-                const videoAspectRatio = webcamFeed.videoWidth / webcamFeed.videoHeight;
-                const targetAspectRatio = targetWidth / targetHeight;
-
-                let drawVideoWidth = targetWidth;
-                let drawVideoHeight = targetHeight;
-                let drawVideoX = targetX;
-                let drawVideoY = targetY;
-
-                if (videoAspectRatio > targetAspectRatio) {
-                    // La vidéo est plus large que la zone cible, on l'ajuste par la hauteur et on la centre horizontalement
-                    drawVideoHeight = targetHeight;
-                    drawVideoWidth = targetHeight * videoAspectRatio;
-                    drawVideoX = targetX + (targetWidth - drawVideoWidth) / 2;
-                } else {
-                    // La vidéo est plus haute que la zone cible, on l'ajuste par la largeur et on la centre verticalement
-                    drawVideoWidth = targetWidth;
-                    drawVideoHeight = targetWidth / videoAspectRatio;
-                    drawVideoY = targetY + (targetHeight - drawVideoHeight) / 2;
-                }
-
-                // Dessine le flux webcam SANS l'effet miroir pour la photo finale
-                // L'effet miroir est géré uniquement par le CSS de #webcam-feed pour la prévisualisation en direct.
-                context.drawImage(webcamFeed, drawVideoX, drawVideoY, drawVideoWidth, drawVideoHeight);
-
             } else {
                 console.warn("L'image du cadre n'est pas encore chargée ou est invalide. Assurez-vous que 'Cadre photo png.jpg' est dans le bon dossier.");
                 alert("Le cadre n'a pas pu être appliqué. La photo a été prise sans cadre.");
-                // Si le cadre ne peut pas être chargé, dessine juste la webcam (non-miroir)
-                context.drawImage(webcamFeed, 0, 0, photoCanvas.width, photoCanvas.height);
             }
 
-            // 5. Récupère la photo finale du canvas sous forme d'URL de données (Base64)
+            // 4. Récupère la photo finale du canvas sous forme d'URL de données (Base64)
             photoDataUrl = photoCanvas.toDataURL('image/png');
             downloadBtn.disabled = false; // Active le bouton de téléchargement
         });
@@ -412,9 +410,13 @@
 
         // Démarrer la webcam et énumérer les caméras au chargement complet de la page
         window.addEventListener('load', async () => {
+            setWebcamAndCanvasPosition(); // Définir la position initiale de la webcam/canvas
             await enumerateCameras(); // Énumère les caméras avant de démarrer
             await startWebcam(); // Démarre la webcam (utilisera la première ou la frontale par défaut)
         });
+
+        // Met à jour la position et la taille de la webcam/canvas lors du redimensionnement de la fenêtre
+        window.addEventListener('resize', setWebcamAndCanvasPosition);
 
         // Arrêter le flux de la webcam lorsque l'utilisateur quitte ou ferme la page
         window.addEventListener('beforeunload', () => {
@@ -440,3 +442,4 @@
     </script>
 </body>
 </html>
+
