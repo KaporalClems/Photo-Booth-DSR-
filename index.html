@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Booth DSR</title>
+    <!-- Tailwind CSS CDN pour un stylisme rapide et réactif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Police Inter pour une meilleure lisibilité -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Lien vers le manifest de la PWA -->
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Couleur de fond douce */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 90%;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* Coins arrondis */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            position: relative;
+        }
+        video, canvas {
+            width: 100%;
+            max-width: 640px; /* Largeur maximale pour la vidéo/canvas */
+            height: auto;
+            border-radius: 1rem;
+            background-color: #000; /* Fond noir pour la vidéo/canvas */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            width: 100%;
+        }
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem; /* Coins arrondis pour les boutons */
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+        .button-primary {
+            background-color: #4f46e5; /* Indigo */
+            color: white;
+        }
+        .button-primary:hover {
+            background-color: #4338ca;
+        }
+        .button-secondary {
+            background-color: #6b7280; /* Gris */
+            color: white;
+        }
+        .button-secondary:hover {
+            background-color: #4b5563;
+        }
+        .button-success {
+            background-color: #10b981; /* Vert */
+            color: white;
+        }
+        .button-success:hover {
+            background-color: #059669;
+        }
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            z-index: 1000;
+            display: none; /* Caché par défaut */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .message-box button {
+            margin-top: 1rem;
+            background-color: #4f46e5;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+        .message-box button:hover {
+            background-color: #4338ca;
+        }
+        .frame-preview {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #ccc;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            object-fit: contain;
+            transition: border-color 0.2s ease;
+        }
+        .frame-preview.selected {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.5);
+        }
+        .frame-selection {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        #fileInput {
+            display: none; /* Cache l'input de fichier par défaut */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="container">
+        <h1 class="text-3xl font-bold text-indigo-700 mb-4">Photo Booth DSR</h1>
+
+        <div id="messageBox" class="message-box">
+            <p id="messageText"></p>
+            <button onclick="hideMessageBox()">OK</button>
+        </div>
+
+        <video id="video" class="rounded-xl shadow-lg" autoplay playsinline></video>
+        <canvas id="canvas" class="hidden rounded-xl shadow-lg"></canvas>
+        <img id="photoPreview" class="hidden rounded-xl shadow-lg" alt="Photo prise">
+
+        <div class="controls">
+            <button id="startCameraButton" class="button-primary">Ouvrir la Caméra</button>
+            <button id="takePhotoButton" class="button-primary hidden">Prendre la Photo</button>
+            <button id="downloadPhotoButton" class="button-success hidden">Télécharger la Photo</button>
+            <button id="retakePhotoButton" class="button-secondary hidden">Reprendre</button>
+        </div>
+
+        <h2 class="text-xl font-semibold mt-4 text-gray-700">Choisissez un cadre :</h2>
+        <div class="frame-selection" id="frameSelection">
+            <!-- Les cadres seront ajoutés ici par JavaScript -->
+        </div>
+        <input type="file" id="fileInput" accept="image/png">
+        <button id="uploadFrameButton" class="button-secondary">Importer un cadre PNG</button>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const photoPreview = document.getElementById('photoPreview');
+        const startCameraButton = document.getElementById('startCameraButton');
+        const takePhotoButton = document.getElementById('takePhotoButton');
+        const downloadPhotoButton = document.getElementById('downloadPhotoButton');
+        const retakePhotoButton = document.getElementById('retakePhotoButton');
+        const frameSelection = document.getElementById('frameSelection');
+        const fileInput = document.getElementById('fileInput');
+        const uploadFrameButton = document.getElementById('uploadFrameButton');
+
+        let currentStream;
+        let selectedFrame = null; // Stocke l'objet Image du cadre sélectionné
+        let capturedPhotoBlob = null; // Stocke le Blob de la photo capturée
+
+        // Cadres par défaut (ajoutez plus d'URLs si vous en avez)
+        const defaultFrames = [
+            'https://placehold.co/600x400/FF5733/FFFFFF?text=Cadre+1', // Exemple de cadre 1
+            'https://placehold.co/600x400/33FF57/FFFFFF?text=Cadre+2', // Exemple de cadre 2
+            'https://placehold.co/600x400/3357FF/FFFFFF?text=Cadre+3'  // Exemple de cadre 3
+        ];
+
+        // Fonction pour afficher une boîte de message personnalisée
+        function showMessageBox(message) {
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            messageText.textContent = message;
+            messageBox.style.display = 'block';
+        }
+
+        // Fonction pour masquer la boîte de message
+        function hideMessageBox() {
+            document.getElementById('messageBox').style.display = 'none';
+        }
+
+        // Fonction pour charger et afficher les cadres
+        function loadFrames() {
+            frameSelection.innerHTML = ''; // Nettoyer les cadres existants
+
+            // Charger les cadres par défaut
+            defaultFrames.forEach((src, index) => {
+                const img = new Image();
+                img.src = src;
+                img.onload = () => {
+                    const frameDiv = document.createElement('img');
+                    frameDiv.src = src;
+                    frameDiv.alt = `Cadre ${index + 1}`;
+                    frameDiv.classList.add('frame-preview');
+                    frameDiv.addEventListener('click', () => selectFrame(img, frameDiv));
+                    frameSelection.appendChild(frameDiv);
+                };
+                img.onerror = () => {
+                    console.error(`Erreur de chargement du cadre: ${src}`);
+                    // Vous pouvez ajouter une image de remplacement ici si le chargement échoue
+                    const errorDiv = document.createElement('div');
+                    errorDiv.textContent = `Cadre ${index + 1} (erreur)`;
+                    errorDiv.classList.add('frame-preview', 'flex', 'items-center', 'justify-center', 'text-sm');
+                    frameSelection.appendChild(errorDiv);
+                };
+            });
+        }
+
+        // Fonction pour sélectionner un cadre
+        function selectFrame(imageObj, element) {
+            // Supprimer la classe 'selected' de tous les cadres
+            document.querySelectorAll('.frame-preview').forEach(el => el.classList.remove('selected'));
+            // Ajouter la classe 'selected' au cadre cliqué
+            element.classList.add('selected');
+            selectedFrame = imageObj;
+            showMessageBox('Cadre sélectionné !');
+        }
+
+        // Fonction pour démarrer la caméra
+        startCameraButton.addEventListener('click', async () => {
+            try {
+                // Demander l'accès à la caméra
+                currentStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); // 'environment' pour la caméra arrière
+                video.srcObject = currentStream;
+                video.play();
+
+                // Cacher le bouton "Ouvrir la Caméra" et montrer "Prendre la Photo"
+                startCameraButton.classList.add('hidden');
+                takePhotoButton.classList.remove('hidden');
+                video.classList.remove('hidden');
+                canvas.classList.add('hidden');
+                photoPreview.classList.add('hidden');
+                downloadPhotoButton.classList.add('hidden');
+                retakePhotoButton.classList.add('hidden');
+
+                // Assurez-vous que le canvas a les mêmes dimensions que la vidéo
+                video.addEventListener('loadedmetadata', () => {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                });
+            } catch (err) {
+                console.error("Erreur d'accès à la caméra: ", err);
+                showMessageBox("Impossible d'accéder à la caméra. Veuillez autoriser l'accès.");
+            }
+        });
+
+        // Fonction pour prendre la photo
+        takePhotoButton.addEventListener('click', () => {
+            if (!selectedFrame) {
+                showMessageBox("Veuillez sélectionner un cadre avant de prendre la photo.");
+                return;
+            }
+
+            // Assurez-vous que le canvas a les bonnes dimensions
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Dessiner la vidéo sur le canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Dessiner le cadre sur le canvas, en s'assurant qu'il couvre toute la zone
+            context.drawImage(selectedFrame, 0, 0, canvas.width, canvas.height);
+
+            // Cacher la vidéo et montrer le canvas avec la photo
+            video.classList.add('hidden');
+            canvas.classList.add('hidden'); // Le canvas est utilisé pour le dessin, mais la photo finale est affichée via photoPreview
+            photoPreview.src = canvas.toDataURL('image/png');
+            photoPreview.classList.remove('hidden');
+
+            // Arrêter le flux de la caméra
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+
+            // Mettre à jour les boutons
+            takePhotoButton.classList.add('hidden');
+            downloadPhotoButton.classList.remove('hidden');
+            retakePhotoButton.classList.remove('hidden');
+
+            // Stocker le Blob pour le téléchargement
+            canvas.toBlob(blob => {
+                capturedPhotoBlob = blob;
+            }, 'image/png');
+        });
+
+        // Fonction pour télécharger la photo
+        downloadPhotoButton.addEventListener('click', () => {
+            if (capturedPhotoBlob) {
+                const url = URL.createObjectURL(capturedPhotoBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'photobooth_dsr.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url); // Libérer l'URL de l'objet
+                showMessageBox("Photo téléchargée !");
+            } else {
+                showMessageBox("Aucune photo à télécharger.");
+            }
+        });
+
+        // Fonction pour reprendre une photo
+        retakePhotoButton.addEventListener('click', () => {
+            // Réinitialiser l'état
+            photoPreview.classList.add('hidden');
+            downloadPhotoButton.classList.add('hidden');
+            retakePhotoButton.classList.add('hidden');
+            startCameraButton.classList.remove('hidden'); // Montrer le bouton pour redémarrer la caméra
+            selectedFrame = null; // Réinitialiser le cadre sélectionné
+            document.querySelectorAll('.frame-preview').forEach(el => el.classList.remove('selected')); // Désélectionner visuellement les cadres
+            capturedPhotoBlob = null; // Réinitialiser le blob de la photo
+
+            // S'assurer que la vidéo est visible pour le prochain démarrage de la caméra
+            video.classList.remove('hidden');
+            canvas.classList.add('hidden'); // Cacher le canvas
+        });
+
+        // Gérer l'importation de cadre PNG
+        uploadFrameButton.addEventListener('click', () => {
+            fileInput.click(); // Déclencher le clic sur l'input de fichier caché
+        });
+
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file && file.type === 'image/png') {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        // Ajouter le cadre importé à la sélection
+                        const frameDiv = document.createElement('img');
+                        frameDiv.src = e.target.result;
+                        frameDiv.alt = "Cadre personnalisé";
+                        frameDiv.classList.add('frame-preview');
+                        frameDiv.addEventListener('click', () => selectFrame(img, frameDiv));
+                        frameSelection.appendChild(frameDiv);
+                        showMessageBox("Cadre PNG importé avec succès !");
+                        // Sélectionner automatiquement le cadre importé
+                        selectFrame(img, frameDiv);
+                    };
+                    img.onerror = () => {
+                        showMessageBox("Erreur de chargement de l'image du cadre.");
+                    };
+                };
+                reader.readAsDataURL(file);
+            } else {
+                showMessageBox("Veuillez sélectionner un fichier PNG valide.");
+            }
+        });
+
+        // Enregistrement du Service Worker pour la PWA
+        // Ce code est pour un environnement de déploiement réel (comme GitHub Pages).
+        // Dans cet environnement de prévisualisation, l'enregistrement du Service Worker peut échouer.
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker enregistré avec succès:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('Échec de l\'enregistrement du ServiceWorker:', error);
+                    });
+            });
+        }
+
+        // Charger les cadres au démarrage
+        loadFrames();
+    </script>
+</body>
+</html>
