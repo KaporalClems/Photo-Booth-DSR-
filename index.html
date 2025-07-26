@@ -36,7 +36,7 @@
             text-align: center; /* Centre le texte et les éléments à l'intérieur */
             max-width: 500px; /* Largeur maximale ajustée pour mieux correspondre au cadre portrait */
             width: 90%; /* S'adapte à la largeur de l'écran (responsive) */
-            border: 2px solid #007bff; /* Bordure thématique bleue */
+            /* border: 2px solid #007bff; -- Supprimé comme demandé */
             display: flex; /* Utilise flexbox pour l'agencement interne */
             flex-direction: column; /* Les éléments s'empilent verticalement */
             align-items: center; /* Centre les éléments horizontalement */
@@ -207,7 +207,7 @@
             <!-- Élément canvas où la photo sera capturée et le cadre appliqué -->
             <canvas id="photo-canvas"></canvas>
             <!-- L'image du cadre est chargée ici mais cachée. Elle sera dessinée sur le canvas via JavaScript. -->
-            <img id="frame-overlay" src="Cadre photo png.png" alt="Cadre Photo" style="display: none;">
+            <img id="frame-overlay" src="Cadre photo png.jpg" alt="Cadre Photo" style="display: none;">
 
             <!-- Bouton pour prendre la photo (icône caméra) -->
             <button id="take-photo-btn" class="icon-button">
