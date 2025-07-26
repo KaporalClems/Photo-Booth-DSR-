@@ -7,7 +7,7 @@ const urlsToCache = [
     'Cadre photo png.png', // Exemple de cadre 1
     'https://placehold.co/600x400/33FF57/FFFFFF?text=Cadre+2', // Exemple de cadre 2
     'https://placehold.co/600x400/3357FF/FFFFFF?text=Cadre+3',  // Exemple de cadre 3
-    'icon-192x192.png', // Chemin direct pour l'icône 192x192
+    'Destination-Sud-Reunion-192X192.png', // Chemin direct pour l'icône 192x192
     'Destination-Sud-Reunion-512X512.png'  // Chemin direct pour l'icône 512x512
 ];
 
