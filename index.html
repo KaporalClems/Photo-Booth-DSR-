@@ -13,7 +13,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; /* Couleur de fond douce */
+            background-color: #f0f2f5; /* Couleur de fond par défaut */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -21,54 +21,46 @@
             min-height: 100vh;
             margin: 0;
             color: #333;
+            /* Le cadre sera appliqué dynamiquement au canvas, pas au body */
         }
-        .container {
-            max-width: 90%;
+        .app-container {
+            position: relative; /* Pour positionner les éléments à l'intérieur */
             width: 100%;
-            background-color: #ffffff;
-            border-radius: 1.5rem; /* Coins arrondis */
+            max-width: 744px; /* Largeur naturelle de votre cadre */
+            aspect-ratio: 744 / 1052; /* Ratio de votre cadre (largeur / hauteur) */
+            background-color: #000; /* Fond noir derrière la zone de la photo */
+            border-radius: 1.5rem; /* Coins arrondis pour l'ensemble */
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            padding: 1.5rem;
+            overflow: hidden; /* S'assure que le contenu ne dépasse pas */
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1.5rem;
-            position: relative;
+            justify-content: center;
+            margin: 1.5rem; /* Marge autour du conteneur principal */
         }
-        .video-container {
-            position: relative; /* Nécessaire pour le positionnement absolu des enfants */
-            width: 100%;
-            max-width: 640px; /* Largeur maximale pour le conteneur vidéo */
-            padding-bottom: 66.7%; /* Force un ratio 3:2 (hauteur est 2/3 de la largeur) */
-            height: 0; /* Important: met la hauteur à 0 quand on utilise padding-bottom */
-            border-radius: 1rem;
-            background-color: #000;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            overflow: hidden; /* Assure que le contenu ne dépasse pas */
-        }
-        video, canvas, #photoPreview, #frameOverlay {
-            position: absolute; /* Positionne les enfants absolument dans le conteneur */
+        #canvas, #photoPreview {
+            position: absolute; /* Le canvas et la photo preview remplissent le conteneur */
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            display: block;
-            border-radius: 1rem;
-            object-fit: cover; /* S'assure que la vidéo/photo remplit le conteneur, potentiellement en rognant */
+            display: block; /* Supprime l'espace sous l'élément */
+            object-fit: contain; /* Assure que le contenu s'adapte sans déformation */
         }
-        #frameOverlay {
-            background-size: cover; /* 'cover' pour remplir la zone */
-            background-repeat: no-repeat;
-            background-position: center;
-            pointer-events: none; /* Permet aux clics de passer à la vidéo en dessous */
-            display: none; /* Caché par défaut */
+        #video {
+            display: none; /* La vidéo est cachée, son flux est dessiné sur le canvas */
         }
         .controls {
+            position: absolute;
+            bottom: 1rem; /* Positionne les contrôles en bas de l'app-container */
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
             flex-wrap: wrap;
             gap: 1rem;
             justify-content: center;
-            width: 100%;
+            width: 90%; /* Prend une bonne partie de la largeur */
+            z-index: 10; /* S'assure que les boutons sont au-dessus du canvas */
         }
         button {
             padding: 0.75rem 1.5rem;
@@ -129,46 +121,21 @@
         .message-box button:hover {
             background-color: #4338ca;
         }
-        .frame-preview {
-            width: 80px;
-            height: 80px;
-            border: 2px solid #ccc;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            object-fit: contain;
-            transition: border-color 0.2s ease;
-        }
-        .frame-preview.selected {
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.5);
-        }
-        .frame-selection {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        #fileInput {
-            display: none; /* Cache l'input de fichier par défaut */
-        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
-    <div class="container">
-        <h1 class="text-3xl font-bold text-indigo-700 mb-4">Photo Booth DSR</h1>
+    <div class="app-container">
+        <h1 class="text-3xl font-bold text-indigo-700 mb-4 absolute top-4 z-10" style="color: #4f46e5; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">Photo Booth DSR</h1>
 
         <div id="messageBox" class="message-box">
             <p id="messageText"></p>
             <button onclick="hideMessageBox()">OK</button>
         </div>
 
-        <div class="video-container">
-            <video id="video" autoplay playsinline></video>
-            <div id="frameOverlay"></div>
-            <canvas id="canvas" class="hidden"></canvas>
-            <img id="photoPreview" class="hidden" alt="Photo prise">
-        </div>
+        <video id="video" playsinline></video>
+        <canvas id="canvas"></canvas>
+        <img id="photoPreview" class="hidden" alt="Photo prise">
 
         <div class="controls">
             <button id="startCameraButton" class="button-primary">Ouvrir la Caméra</button>
@@ -176,13 +143,6 @@
             <button id="downloadPhotoButton" class="button-success hidden">Télécharger la Photo</button>
             <button id="retakePhotoButton" class="button-secondary hidden">Reprendre</button>
         </div>
-
-        <h2 class="text-xl font-semibold mt-4 text-gray-700">Choisissez un cadre :</h2>
-        <div class="frame-selection" id="frameSelection">
-            <!-- Les cadres seront ajoutés ici par JavaScript -->
-        </div>
-        <input type="file" id="fileInput" accept="image/png">
-        <button id="uploadFrameButton" class="button-secondary">Importer un cadre PNG</button>
     </div>
 
     <script>
@@ -194,22 +154,20 @@
         const takePhotoButton = document.getElementById('takePhotoButton');
         const downloadPhotoButton = document.getElementById('downloadPhotoButton');
         const retakePhotoButton = document.getElementById('retakePhotoButton');
-        const frameSelection = document.getElementById('frameSelection');
-        const fileInput = document.getElementById('fileInput');
-        const uploadFrameButton = document.getElementById('uploadFrameButton');
-        const frameOverlay = document.getElementById('frameOverlay'); // Nouveau : l'élément de superposition du cadre
+        const appContainer = document.querySelector('.app-container');
 
         let currentStream;
-        let selectedFrame = null; // Stocke l'objet Image du cadre sélectionné
-        let selectedFrameSrc = null; // Stocke l'URL du cadre sélectionné pour l'overlay
-        let capturedPhotoBlob = null; // Stocke le Blob de la photo capturée
+        let capturedPhotoBlob = null;
+        let mainFrameImage = new Image();
+        // Assurez-vous que le chemin de l'image est correct par rapport à votre déploiement GitHub
+        mainFrameImage.src = 'Cadre photo png.jpg';
 
-        // Cadres par défaut (ajoutez plus d'URLs si vous en avez)
-        const defaultFrames = [
-            'Cadre photo png.png', // Cadre photo png
-            'https://placehold.co/600x400/33FF57/FFFFFF?text=Cadre+2', // Exemple de cadre 2
-            'https://placehold.co/600x400/3357FF/FFFFFF?text=Cadre+3'  // Exemple de cadre 3
-        ];
+        // Coordonnées du "trou" transparent dans votre image de cadre (estimées en pixels pour une image de 744x1052)
+        // Ces valeurs sont cruciales et peuvent nécessiter un ajustement fin si le cadre n'apparaît pas parfaitement aligné.
+        const HOLE_X = 111; // Position X du coin supérieur gauche du trou
+        const HOLE_Y = 263; // Position Y du coin supérieur gauche du trou
+        const HOLE_WIDTH = 520; // Largeur du trou
+        const HOLE_HEIGHT = 473; // Hauteur du trou
 
         // Fonction pour afficher une boîte de message personnalisée
         function showMessageBox(message) {
@@ -224,49 +182,14 @@
             document.getElementById('messageBox').style.display = 'none';
         }
 
-        // Fonction pour charger et afficher les cadres
-        function loadFrames() {
-            frameSelection.innerHTML = ''; // Nettoyer les cadres existants
+        // Dessine le cadre principal sur le canvas
+        function drawMainFrame() {
+            // S'assurer que le canvas a les dimensions de l'image du cadre pour un rendu optimal
+            canvas.width = mainFrameImage.naturalWidth;
+            canvas.height = mainFrameImage.naturalHeight;
 
-            // Charger les cadres par défaut
-            defaultFrames.forEach((src, index) => {
-                const img = new Image();
-                img.src = src;
-                img.onload = () => {
-                    const frameDiv = document.createElement('img');
-                    frameDiv.src = src;
-                    frameDiv.alt = `Cadre ${index + 1}`;
-                    frameDiv.classList.add('frame-preview');
-                    frameDiv.addEventListener('click', () => selectFrame(img, src, frameDiv)); // Passe aussi l'URL
-                    frameSelection.appendChild(frameDiv);
-                };
-                img.onerror = () => {
-                    console.error(`Erreur de chargement du cadre: ${src}`);
-                    // Vous pouvez ajouter une image de remplacement ici si le chargement échoue
-                    const errorDiv = document.createElement('div');
-                    errorDiv.textContent = `Cadre ${index + 1} (erreur)`;
-                    errorDiv.classList.add('frame-preview', 'flex', 'items-center', 'justify-center', 'text-sm');
-                    frameSelection.appendChild(errorDiv);
-                };
-            });
-        }
-
-        // Fonction pour sélectionner un cadre
-        function selectFrame(imageObj, imgSrc, element) {
-            // Supprimer la classe 'selected' de tous les cadres
-            document.querySelectorAll('.frame-preview').forEach(el => el.classList.remove('selected'));
-            // Ajouter la classe 'selected' au cadre cliqué
-            element.classList.add('selected');
-            selectedFrame = imageObj;
-            selectedFrameSrc = imgSrc; // Stocke l'URL pour l'overlay
-
-            // Appliquer le cadre à l'overlay
-            frameOverlay.style.backgroundImage = `url('${selectedFrameSrc}')`;
-            // Afficher l'overlay si la vidéo n'est pas active et qu'il n'y a pas de photo affichée (montre sur le fond noir)
-            if (video.classList.contains('hidden') && photoPreview.classList.contains('hidden')) {
-                frameOverlay.style.display = 'block';
-            }
-            showMessageBox('Cadre sélectionné !');
+            // Dessiner le cadre en premier
+            context.drawImage(mainFrameImage, 0, 0, canvas.width, canvas.height);
         }
 
         // Fonction pour démarrer la caméra
@@ -280,23 +203,22 @@
                 // Cacher le bouton "Ouvrir la Caméra" et montrer "Prendre la Photo"
                 startCameraButton.classList.add('hidden');
                 takePhotoButton.classList.remove('hidden');
-                video.classList.remove('hidden'); // S'assurer que la vidéo est visible
                 photoPreview.classList.add('hidden'); // Cacher la photo précédente
                 downloadPhotoButton.classList.add('hidden');
                 retakePhotoButton.classList.add('hidden');
+                canvas.classList.remove('hidden'); // S'assurer que le canvas est visible
 
-                // Assurez-vous que le canvas a les mêmes dimensions que la vidéo
-                video.addEventListener('loadedmetadata', () => {
-                    // Les dimensions du canvas doivent correspondre aux dimensions rendues du conteneur vidéo
-                    canvas.width = video.offsetWidth;
-                    canvas.height = video.offsetHeight;
-
-                    // Afficher l'overlay du cadre si un cadre est déjà sélectionné
-                    if (selectedFrameSrc) {
-                        frameOverlay.style.backgroundImage = `url('${selectedFrameSrc}')`;
-                        frameOverlay.style.display = 'block';
-                    }
-                }, { once: true }); // Écoute une seule fois pour éviter des déclenchements multiples
+                // Dessiner le cadre sur le canvas dès que la caméra est prête
+                mainFrameImage.onload = () => {
+                    drawMainFrame();
+                    // Commencer à dessiner le flux vidéo sur le canvas
+                    requestAnimationFrame(drawVideoOnCanvas);
+                };
+                // Si l'image est déjà chargée, dessiner immédiatement
+                if (mainFrameImage.complete) {
+                    drawMainFrame();
+                    requestAnimationFrame(drawVideoOnCanvas);
+                }
 
             } catch (err) {
                 console.error("Erreur d'accès à la caméra: ", err);
@@ -304,35 +226,61 @@
             }
         });
 
+        // Fonction pour dessiner le flux vidéo en continu sur le canvas
+        function drawVideoOnCanvas() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                // Dessiner d'abord le cadre pour effacer le contenu précédent et s'assurer qu'il est en arrière-plan
+                drawMainFrame();
+
+                // Calculer les dimensions pour dessiner la vidéo dans le "trou" avec object-fit: cover
+                let sx, sy, sWidth, sHeight; // Source (vidéo)
+                let dx, dy, dWidth, dHeight; // Destination (canvas, le trou)
+
+                // Dimensions de destination (le trou dans le cadre)
+                dx = HOLE_X;
+                dy = HOLE_Y;
+                dWidth = HOLE_WIDTH;
+                dHeight = HOLE_HEIGHT;
+
+                // Calculer les dimensions source pour "couvrir" le trou avec la vidéo
+                const holeAspectRatio = dWidth / dHeight;
+                const videoAspectRatio = video.videoWidth / video.videoHeight;
+
+                if (videoAspectRatio > holeAspectRatio) {
+                    // La vidéo est plus large que le trou, couper en haut/bas de la vidéo
+                    sHeight = video.videoHeight;
+                    sWidth = sHeight * holeAspectRatio;
+                    sx = (video.videoWidth - sWidth) / 2;
+                    sy = 0;
+                } else {
+                    // La vidéo est plus haute que le trou, couper à gauche/droite de la vidéo
+                    sWidth = video.videoWidth;
+                    sHeight = sWidth / holeAspectRatio;
+                    sx = 0;
+                    sy = (video.videoHeight - sHeight) / 2;
+                }
+
+                // Dessiner la vidéo dans le trou du cadre
+                context.drawImage(video, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+            }
+            // Continuer l'animation
+            if (!video.classList.contains('hidden')) { // S'assurer que la vidéo est toujours active
+                 requestAnimationFrame(drawVideoOnCanvas);
+            }
+        }
+
         // Fonction pour prendre la photo
         takePhotoButton.addEventListener('click', () => {
-            if (!selectedFrame) {
-                showMessageBox("Veuillez sélectionner un cadre avant de prendre la photo.");
-                return;
-            }
-
-            // Cacher l'overlay du cadre pendant la capture
-            frameOverlay.style.display = 'none';
-
-            // Assurez-vous que le canvas a les bonnes dimensions (celles du conteneur vidéo)
-            canvas.width = video.offsetWidth;
-            canvas.height = video.offsetHeight;
-
-            // Dessiner la vidéo sur le canvas (elle sera étirée/rognée pour correspondre au ratio du canvas)
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Dessiner le cadre sur le canvas, en s'assurant qu'il couvre toute la zone
-            context.drawImage(selectedFrame, 0, 0, canvas.width, canvas.height);
-
-            // Cacher la vidéo et montrer la photo finale
-            video.classList.add('hidden');
-            photoPreview.src = canvas.toDataURL('image/png');
-            photoPreview.classList.remove('hidden');
-
+            // Le canvas contient déjà le cadre et la vidéo correctement dessinés
             // Arrêter le flux de la caméra
             if (currentStream) {
                 currentStream.getTracks().forEach(track => track.stop());
             }
+
+            // Afficher la photo finale sur l'élément img
+            photoPreview.src = canvas.toDataURL('image/png');
+            photoPreview.classList.remove('hidden');
+            canvas.classList.add('hidden'); // Cacher le canvas une fois la photo prise
 
             // Mettre à jour les boutons
             takePhotoButton.classList.add('hidden');
@@ -370,51 +318,26 @@
             retakePhotoButton.classList.add('hidden');
             startCameraButton.classList.remove('hidden'); // Montrer le bouton pour redémarrer la caméra
             capturedPhotoBlob = null; // Réinitialiser le blob de la photo
+            canvas.classList.remove('hidden'); // Afficher le canvas pour le prochain démarrage de la caméra
 
-            // S'assurer que la vidéo est visible pour le prochain démarrage de la caméra
-            video.classList.remove('hidden');
-            canvas.classList.add('hidden'); // Cacher le canvas
-
-            // Afficher l'overlay du cadre si un cadre est sélectionné
-            if (selectedFrameSrc) {
-                frameOverlay.style.backgroundImage = `url('${selectedFrameSrc}')`;
-                frameOverlay.style.display = 'block';
-            }
+            // Redessiner le cadre sur le canvas pour un état initial propre
+            drawMainFrame();
         });
 
-        // Gérer l'importation de cadre PNG
-        uploadFrameButton.addEventListener('click', () => {
-            fileInput.click(); // Déclencher le clic sur l'input de fichier caché
-        });
+        // Initialiser l'affichage du cadre sur le canvas au chargement
+        mainFrameImage.onerror = () => {
+            console.error("Erreur de chargement de l'image du cadre principal: Cadre photo png.jpg");
+            showMessageBox("Impossible de charger l'image du cadre principal. Veuillez vérifier le chemin.");
+        };
 
-        fileInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file && file.type === 'image/png') {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = () => {
-                        // Ajouter le cadre importé à la sélection
-                        const frameDiv = document.createElement('img');
-                        frameDiv.src = e.target.result;
-                        frameDiv.alt = "Cadre personnalisé";
-                        frameDiv.classList.add('frame-preview');
-                        frameDiv.addEventListener('click', () => selectFrame(img, e.target.result, frameDiv)); // Passe aussi l'URL
-                        frameSelection.appendChild(frameDiv);
-                        showMessageBox("Cadre PNG importé avec succès !");
-                        // Sélectionner automatiquement le cadre importé
-                        selectFrame(img, e.target.result, frameDiv);
-                    };
-                    img.onerror = () => {
-                        showMessageBox("Erreur de chargement de l'image du cadre.");
-                    };
-                };
-                reader.readAsDataURL(file);
-            } else {
-                showMessageBox("Veuillez sélectionner un fichier PNG valide.");
-            }
-        });
+        // Dessiner le cadre initialement (avant le démarrage de la caméra)
+        mainFrameImage.onload = () => {
+            drawMainFrame();
+        };
+        // Si l'image est déjà chargée (par exemple, depuis le cache), dessiner immédiatement
+        if (mainFrameImage.complete) {
+            drawMainFrame();
+        }
 
         // Enregistrement du Service Worker pour la PWA
         // Ce bloc de code est commenté pour éviter les erreurs dans l'environnement de prévisualisation.
@@ -433,11 +356,7 @@
             });
         }
         */
-
-        // Charger les cadres au démarrage
-        loadFrames();
     </script>
 </body>
 </html>
-
 
