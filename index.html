@@ -35,13 +35,33 @@
             gap: 1.5rem;
             position: relative;
         }
-        video, canvas {
+        .video-container {
+            position: relative;
             width: 100%;
-            max-width: 640px; /* Largeur maximale pour la vidéo/canvas */
-            height: auto;
+            max-width: 640px; /* Largeur maximale pour le conteneur vidéo */
+            height: auto; /* La hauteur sera définie par la vidéo */
             border-radius: 1rem;
-            background-color: #000; /* Fond noir pour la vidéo/canvas */
+            background-color: #000;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden; /* Assure que le cadre ne dépasse pas */
+        }
+        video, canvas, #photoPreview {
+            width: 100%;
+            height: auto;
+            display: block; /* Supprime l'espace sous l'élément */
+            border-radius: 1rem; /* Assure les coins arrondis */
+        }
+        #frameOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: contain; /* Ajuste le cadre sans le couper */
+            background-repeat: no-repeat;
+            background-position: center;
+            pointer-events: none; /* Permet aux clics de passer à la vidéo en dessous */
+            display: none; /* Caché par défaut */
         }
         .controls {
             display: flex;
@@ -143,9 +163,12 @@
             <button onclick="hideMessageBox()">OK</button>
         </div>
 
-        <video id="video" class="rounded-xl shadow-lg" autoplay playsinline></video>
-        <canvas id="canvas" class="hidden rounded-xl shadow-lg"></canvas>
-        <img id="photoPreview" class="hidden rounded-xl shadow-lg" alt="Photo prise">
+        <div class="video-container">
+            <video id="video" autoplay playsinline></video>
+            <div id="frameOverlay"></div>
+            <canvas id="canvas" class="hidden"></canvas>
+            <img id="photoPreview" class="hidden" alt="Photo prise">
+        </div>
 
         <div class="controls">
             <button id="startCameraButton" class="button-primary">Ouvrir la Caméra</button>
@@ -174,14 +197,16 @@
         const frameSelection = document.getElementById('frameSelection');
         const fileInput = document.getElementById('fileInput');
         const uploadFrameButton = document.getElementById('uploadFrameButton');
+        const frameOverlay = document.getElementById('frameOverlay'); // Nouveau : l'élément de superposition du cadre
 
         let currentStream;
         let selectedFrame = null; // Stocke l'objet Image du cadre sélectionné
+        let selectedFrameSrc = null; // Stocke l'URL du cadre sélectionné pour l'overlay
         let capturedPhotoBlob = null; // Stocke le Blob de la photo capturée
 
         // Cadres par défaut (ajoutez plus d'URLs si vous en avez)
         const defaultFrames = [
-            'Cadre photo png.png', // Exemple de cadre 1
+            'https://placehold.co/600x400/FF5733/FFFFFF?text=Cadre+1', // Exemple de cadre 1
             'https://placehold.co/600x400/33FF57/FFFFFF?text=Cadre+2', // Exemple de cadre 2
             'https://placehold.co/600x400/3357FF/FFFFFF?text=Cadre+3'  // Exemple de cadre 3
         ];
@@ -212,7 +237,7 @@
                     frameDiv.src = src;
                     frameDiv.alt = `Cadre ${index + 1}`;
                     frameDiv.classList.add('frame-preview');
-                    frameDiv.addEventListener('click', () => selectFrame(img, frameDiv));
+                    frameDiv.addEventListener('click', () => selectFrame(img, src, frameDiv)); // Passe aussi l'URL
                     frameSelection.appendChild(frameDiv);
                 };
                 img.onerror = () => {
@@ -227,12 +252,19 @@
         }
 
         // Fonction pour sélectionner un cadre
-        function selectFrame(imageObj, element) {
+        function selectFrame(imageObj, imgSrc, element) {
             // Supprimer la classe 'selected' de tous les cadres
             document.querySelectorAll('.frame-preview').forEach(el => el.classList.remove('selected'));
             // Ajouter la classe 'selected' au cadre cliqué
             element.classList.add('selected');
             selectedFrame = imageObj;
+            selectedFrameSrc = imgSrc; // Stocke l'URL pour l'overlay
+
+            // Appliquer le cadre à l'overlay si la caméra est active
+            if (currentStream) {
+                frameOverlay.style.backgroundImage = `url('${selectedFrameSrc}')`;
+                frameOverlay.style.display = 'block';
+            }
             showMessageBox('Cadre sélectionné !');
         }
 
@@ -247,9 +279,8 @@
                 // Cacher le bouton "Ouvrir la Caméra" et montrer "Prendre la Photo"
                 startCameraButton.classList.add('hidden');
                 takePhotoButton.classList.remove('hidden');
-                video.classList.remove('hidden');
-                canvas.classList.add('hidden');
-                photoPreview.classList.add('hidden');
+                video.classList.remove('hidden'); // S'assurer que la vidéo est visible
+                photoPreview.classList.add('hidden'); // Cacher la photo précédente
                 downloadPhotoButton.classList.add('hidden');
                 retakePhotoButton.classList.add('hidden');
 
@@ -257,7 +288,16 @@
                 video.addEventListener('loadedmetadata', () => {
                     canvas.width = video.videoWidth;
                     canvas.height = video.videoHeight;
-                });
+                    // Ajuster la hauteur du conteneur vidéo pour qu'elle corresponde
+                    video.parentElement.style.height = `${video.videoHeight}px`;
+
+                    // Afficher l'overlay du cadre si un cadre est déjà sélectionné
+                    if (selectedFrameSrc) {
+                        frameOverlay.style.backgroundImage = `url('${selectedFrameSrc}')`;
+                        frameOverlay.style.display = 'block';
+                    }
+                }, { once: true }); // Écoute une seule fois pour éviter des déclenchements multiples
+
             } catch (err) {
                 console.error("Erreur d'accès à la caméra: ", err);
                 showMessageBox("Impossible d'accéder à la caméra. Veuillez autoriser l'accès.");
@@ -271,6 +311,9 @@
                 return;
             }
 
+            // Cacher l'overlay du cadre pendant la capture
+            frameOverlay.style.display = 'none';
+
             // Assurez-vous que le canvas a les bonnes dimensions
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -281,9 +324,8 @@
             // Dessiner le cadre sur le canvas, en s'assurant qu'il couvre toute la zone
             context.drawImage(selectedFrame, 0, 0, canvas.width, canvas.height);
 
-            // Cacher la vidéo et montrer le canvas avec la photo
+            // Cacher la vidéo et montrer la photo finale
             video.classList.add('hidden');
-            canvas.classList.add('hidden'); // Le canvas est utilisé pour le dessin, mais la photo finale est affichée via photoPreview
             photoPreview.src = canvas.toDataURL('image/png');
             photoPreview.classList.remove('hidden');
 
@@ -327,13 +369,17 @@
             downloadPhotoButton.classList.add('hidden');
             retakePhotoButton.classList.add('hidden');
             startCameraButton.classList.remove('hidden'); // Montrer le bouton pour redémarrer la caméra
-            selectedFrame = null; // Réinitialiser le cadre sélectionné
-            document.querySelectorAll('.frame-preview').forEach(el => el.classList.remove('selected')); // Désélectionner visuellement les cadres
             capturedPhotoBlob = null; // Réinitialiser le blob de la photo
 
             // S'assurer que la vidéo est visible pour le prochain démarrage de la caméra
             video.classList.remove('hidden');
             canvas.classList.add('hidden'); // Cacher le canvas
+
+            // Afficher l'overlay du cadre si un cadre est sélectionné
+            if (selectedFrameSrc) {
+                frameOverlay.style.backgroundImage = `url('${selectedFrameSrc}')`;
+                frameOverlay.style.display = 'block';
+            }
         });
 
         // Gérer l'importation de cadre PNG
@@ -354,11 +400,11 @@
                         frameDiv.src = e.target.result;
                         frameDiv.alt = "Cadre personnalisé";
                         frameDiv.classList.add('frame-preview');
-                        frameDiv.addEventListener('click', () => selectFrame(img, frameDiv));
+                        frameDiv.addEventListener('click', () => selectFrame(img, e.target.result, frameDiv)); // Passe aussi l'URL
                         frameSelection.appendChild(frameDiv);
                         showMessageBox("Cadre PNG importé avec succès !");
                         // Sélectionner automatiquement le cadre importé
-                        selectFrame(img, frameDiv);
+                        selectFrame(img, e.target.result, frameDiv);
                     };
                     img.onerror = () => {
                         showMessageBox("Erreur de chargement de l'image du cadre.");
