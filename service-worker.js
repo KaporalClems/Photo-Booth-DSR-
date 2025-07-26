@@ -4,7 +4,7 @@ const urlsToCache = [
     '/index.html',
     'https://cdn.tailwindcss.com',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap',
-    'https://placehold.co/600x400/FF5733/FFFFFF?text=Cadre+1', // Exemple de cadre 1
+    'Cadre photo png.png', // Exemple de cadre 1
     'https://placehold.co/600x400/33FF57/FFFFFF?text=Cadre+2', // Exemple de cadre 2
     'https://placehold.co/600x400/3357FF/FFFFFF?text=Cadre+3',  // Exemple de cadre 3
     'icon-192x192.png', // Chemin direct pour l'icône 192x192
