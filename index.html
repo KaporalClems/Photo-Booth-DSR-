@@ -57,7 +57,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-size: contain; /* Ajuste le cadre sans le couper */
+            background-size: cover; /* CHANGEMENT ICI : 'cover' pour remplir la zone */
             background-repeat: no-repeat;
             background-position: center;
             pointer-events: none; /* Permet aux clics de passer à la vidéo en dessous */
@@ -206,7 +206,7 @@
 
         // Cadres par défaut (ajoutez plus d'URLs si vous en avez)
         const defaultFrames = [
-            'Cadre photo png.png', // Exemple de cadre 1
+            'https://static.vecteezy.com/system/resources/previews/021/515/328/non_2x/gold-colored-wooden-frame-on-transparent-background-file-png.png', // Cadre doré
             'https://placehold.co/600x400/33FF57/FFFFFF?text=Cadre+2', // Exemple de cadre 2
             'https://placehold.co/600x400/3357FF/FFFFFF?text=Cadre+3'  // Exemple de cadre 3
         ];
@@ -260,9 +260,10 @@
             selectedFrame = imageObj;
             selectedFrameSrc = imgSrc; // Stocke l'URL pour l'overlay
 
-            // Appliquer le cadre à l'overlay si la caméra est active
-            if (currentStream) {
-                frameOverlay.style.backgroundImage = `url('${selectedFrameSrc}')`;
+            // Appliquer le cadre à l'overlay
+            frameOverlay.style.backgroundImage = `url('${selectedFrameSrc}')`;
+            // Afficher l'overlay si la vidéo n'est pas active et qu'il n'y a pas de photo affichée (montre sur le fond noir)
+            if (video.classList.contains('hidden') && photoPreview.classList.contains('hidden')) {
                 frameOverlay.style.display = 'block';
             }
             showMessageBox('Cadre sélectionné !');
@@ -417,8 +418,10 @@
         });
 
         // Enregistrement du Service Worker pour la PWA
-        // Ce code est pour un environnement de déploiement réel (comme GitHub Pages).
-        // Dans cet environnement de prévisualisation, l'enregistrement du Service Worker peut échouer.
+        // Ce bloc de code est commenté pour éviter les erreurs dans l'environnement de prévisualisation.
+        // DÉCOMMENTEZ-LE LORS DU DÉPLOIEMENT SUR UN SERVEUR WEB (comme GitHub Pages)
+        // pour que la PWA fonctionne pleinement et offre des fonctionnalités hors ligne.
+        /*
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
@@ -430,9 +433,11 @@
                     });
             });
         }
+        */
 
         // Charger les cadres au démarrage
         loadFrames();
     </script>
 </body>
 </html>
+
