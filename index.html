@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photo Booth La Réunion</title>
 
+    <!-- Font Awesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
     <!-- Styles CSS intégrés -->
     <style>
         /* Styles généraux pour le corps de la page */
@@ -15,13 +18,18 @@
             min-height: 100vh; /* Prend au moins toute la hauteur de la fenêtre */
             margin: 0; /* Supprime les marges par défaut du corps */
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Police de caractères moderne */
-            background-color: #e0f2f7; /* Un bleu clair apaisant pour l'arrière-plan */
+            /* Applique l'image en fond d'écran */
+            background-image: url('Cadre photo png.jpg'); /* Chemin vers ton image */
+            background-size: cover; /* Couvre toute la zone, peut recadrer l'image */
+            background-position: center center; /* Centre l'image */
+            background-repeat: no-repeat; /* Ne répète pas l'image */
+            background-attachment: fixed; /* Fixe l'image en arrière-plan lors du défilement */
             color: #333; /* Couleur de texte foncée */
         }
 
         /* Conteneur principal de l'application Photo Booth */
         .photo-booth-container {
-            background-color: #ffffff; /* Fond blanc pour le conteneur */
+            background-color: rgba(255, 255, 255, 0.9); /* Fond blanc semi-transparent */
             padding: 20px; /* Espacement interne */
             border-radius: 12px; /* Coins arrondis */
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Ombre portée pour un effet de profondeur */
@@ -41,7 +49,7 @@
             /* Ratio d'aspect ajusté pour correspondre au cadre (720x960 -> 3:4 portrait) */
             padding-bottom: calc(960 / 720 * 100%); /* Hauteur = 4/3 de la largeur */
             height: 0; /* Hauteur initiale à 0, la hauteur est gérée par padding-bottom */
-            margin-bottom: 25px; /* Marge sous le wrapper vidéo */
+            /* margin-bottom: 25px; Supprimé car les boutons sont maintenant à l'intérieur */
             overflow: hidden; /* Cache tout ce qui dépasse */
             border-radius: 8px; /* Coins arrondis */
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* Légère ombre */
@@ -71,53 +79,92 @@
             z-index: 2; /* Au-dessus de la vidéo, en dessous des boutons */
         }
 
-        /* Conteneur des boutons de contrôle */
-        .controls {
-            position: absolute; /* Positionne les boutons par rapport à .video-wrapper */
+        /* Styles de base pour tous les boutons d'icônes */
+        .icon-button {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.5); /* Fond semi-transparent */
+            color: white;
+            border: none;
+            border-radius: 50%; /* Boutons ronds */
+            width: 50px; /* Taille des boutons */
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5em; /* Taille de l'icône */
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 3; /* Au-dessus du canvas */
+        }
+
+        .icon-button:hover {
+            background-color: rgba(0, 0, 0, 0.7);
+            transform: scale(1.05);
+        }
+
+        .icon-button:active {
+            transform: scale(0.95);
+        }
+
+        .icon-button:disabled {
+            background-color: rgba(150, 150, 150, 0.5);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Positionnement du bouton de prise de photo (icône caméra) */
+        #take-photo-btn {
+            bottom: 60px; /* Positionné plus haut pour être sur le cadre */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #28a745; /* Vert */
+        }
+        #take-photo-btn:hover {
+            background-color: #218838;
+        }
+
+        /* Positionnement du bouton de changement de caméra (icône flip) */
+        #flip-camera-btn {
+            top: 30px; /* Positionné en haut du cadre */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #007bff; /* Bleu */
+        }
+        #flip-camera-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Positionnement du bouton de téléchargement (texte "TÉLÉCHARGER") */
+        #download-btn {
+            position: absolute; /* Positionné par rapport à .video-wrapper */
             bottom: 20px; /* 20px du bas du cadre */
-            left: 50%; /* Centre horizontalement */
-            transform: translateX(-50%); /* Ajuste le centrage parfait */
-            display: flex; /* Utilise Flexbox pour aligner les boutons */
-            gap: 15px; /* Espace entre les boutons */
-            z-index: 3; /* Au-dessus du canvas et de la vidéo */
+            right: 20px; /* 20px de la droite du cadre */
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            background-color: #ffc107; /* Jaune */
+            color: #333; /* Texte foncé pour le contraste */
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 3; /* Au-dessus du canvas */
         }
-
-        /* Styles des boutons */
-        .controls button {
-            padding: 10px 20px; /* Espacement interne des boutons */
-            font-size: 1em; /* Taille de police des boutons */
-            cursor: pointer; /* Indique que l'élément est cliquable */
-            border: none; /* Supprime la bordure par défaut */
-            border-radius: 6px; /* Coins arrondis */
-            background-color: #28a745; /* Couleur verte pour "Prendre Photo" */
-            color: white; /* Texte blanc */
-            transition: background-color 0.3s ease, transform 0.1s ease; /* Transitions douces pour les effets */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Ombre par défaut */
+        #download-btn:hover:not(:disabled) {
+            background-color: #e0a800;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
         }
-
-        /* Style spécifique pour le bouton "Télécharger" */
-        .controls button#download-btn {
-            background-color: #007bff; /* Couleur bleue pour "Télécharger" */
+        #download-btn:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-
-        /* Effet au survol des boutons (sauf s'ils sont désactivés) */
-        .controls button:hover:not(:disabled) {
-            transform: translateY(-2px); /* Légère élévation au survol */
-            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15); /* Ombre plus prononcée au survol */
-        }
-
-        /* Effet au clic des boutons (sauf s'ils sont désactivés) */
-        .controls button:active:not(:disabled) {
-            transform: translateY(0); /* Retour à la position normale au clic */
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Ombre plus légère au clic */
-        }
-
-        /* Style des boutons désactivés */
-        .controls button:disabled {
-            background-color: #cccccc; /* Couleur grise pour les boutons désactivés */
-            cursor: not-allowed; /* Curseur "non autorisé" */
-            box-shadow: none; /* Pas d'ombre */
-            transform: none; /* Pas de transformation */
+        #download-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
         }
 
         /* Ajustements responsifs pour les petits écrans (smartphones) */
@@ -126,16 +173,23 @@
                 padding: 15px; /* Réduit le padding sur les petits écrans */
             }
 
-            .controls {
-                flex-direction: column; /* Les boutons s'empilent verticalement */
-                gap: 10px; /* Réduit l'espace entre les boutons empilés */
-                bottom: 15px; /* Ajuste la position des boutons */
+            .icon-button {
+                width: 45px;
+                height: 45px;
+                font-size: 1.3em;
             }
 
-            .controls button {
-                width: 100%; /* Les boutons prennent toute la largeur disponible */
-                padding: 10px 15px; /* Ajuste le padding des boutons */
-                font-size: 0.9em; /* Réduit la taille de la police des boutons */
+            #take-photo-btn {
+                bottom: 40px; /* Ajuste la position des boutons */
+            }
+            #flip-camera-btn {
+                top: 20px;
+            }
+            #download-btn {
+                bottom: 15px;
+                right: 15px;
+                padding: 8px 15px;
+                font-size: 0.9em;
             }
         }
     </style>
@@ -146,7 +200,6 @@
 </head>
 <body>
     <div class="photo-booth-container">
-        <!-- Le titre <h1> a été supprimé comme demandé -->
         
         <div class="video-wrapper">
             <!-- Élément vidéo pour afficher le flux de la webcam -->
@@ -154,15 +207,20 @@
             <!-- Élément canvas où la photo sera capturée et le cadre appliqué -->
             <canvas id="photo-canvas"></canvas>
             <!-- L'image du cadre est chargée ici mais cachée. Elle sera dessinée sur le canvas via JavaScript. -->
-            <img id="frame-overlay" src="Cadre photo png.jpg" alt="Cadre Photo" style="display: none;">
+            <img id="frame-overlay" src="Cadre photo png.png" alt="Cadre Photo" style="display: none;">
 
-            <!-- Conteneur des boutons de contrôle positionné par-dessus le cadre -->
-            <div class="controls">
-                <!-- Bouton pour prendre la photo -->
-                <button id="take-photo-btn">Prendre Photo</button>
-                <!-- Bouton pour télécharger la photo, désactivé par défaut -->
-                <button id="download-btn" disabled>Télécharger</button>
-            </div>
+            <!-- Bouton pour prendre la photo (icône caméra) -->
+            <button id="take-photo-btn" class="icon-button">
+                <i class="fas fa-camera"></i>
+            </button>
+
+            <!-- Bouton pour changer de caméra (icône flip) -->
+            <button id="flip-camera-btn" class="icon-button">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+
+            <!-- Bouton pour télécharger la photo (texte "TÉLÉCHARGER") -->
+            <button id="download-btn" disabled>TÉLÉCHARGER</button>
         </div>
     </div>
 
@@ -173,17 +231,64 @@
         const photoCanvas = document.getElementById('photo-canvas');
         const context = photoCanvas.getContext('2d'); // Contexte de dessin 2D du canvas
         const takePhotoBtn = document.getElementById('take-photo-btn');
+        const flipCameraBtn = document.getElementById('flip-camera-btn'); // Nouveau bouton flip
         const downloadBtn = document.getElementById('download-btn');
         const frameOverlay = document.getElementById('frame-overlay'); // L'élément <img> du cadre
 
         let stream; // Variable pour stocker le flux vidéo de la webcam
         let photoDataUrl; // Variable pour stocker l'URL de la photo prise (format base64)
+        let currentCameraId = null; // ID de la caméra actuellement utilisée
+        let videoInputDevices = []; // Liste des caméras disponibles
+
+        // Fonction pour énumérer les caméras disponibles
+        async function enumerateCameras() {
+            videoInputDevices = [];
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                devices.forEach(device => {
+                    if (device.kind === 'videoinput') {
+                        videoInputDevices.push(device);
+                    }
+                });
+                // Active/désactive le bouton flip si plus d'une caméra est disponible
+                flipCameraBtn.disabled = videoInputDevices.length <= 1;
+            } catch (error) {
+                console.error("Erreur lors de l'énumération des caméras :", error);
+                flipCameraBtn.disabled = true; // Désactive le bouton en cas d'erreur
+            }
+        }
 
         // Fonction asynchrone pour démarrer la webcam
-        async function startWebcam() {
+        async function startWebcam(deviceId = null) {
+            // Arrête le flux précédent si existant
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+            const constraints = {
+                video: {
+                    facingMode: 'user' // Par défaut, caméra frontale
+                }
+            };
+
+            if (deviceId) {
+                // Si un deviceId est spécifié, l'utilise
+                constraints.video = { deviceId: { exact: deviceId } };
+            } else if (videoInputDevices.length > 0) {
+                // Si pas de deviceId, mais des caméras sont énumérées, utilise la première
+                // ou essaie de trouver la caméra frontale par défaut
+                const frontCamera = videoInputDevices.find(device => device.label.toLowerCase().includes('front'));
+                if (frontCamera) {
+                    constraints.video = { deviceId: { exact: frontCamera.deviceId } };
+                    currentCameraId = frontCamera.deviceId;
+                } else {
+                    constraints.video = { deviceId: { exact: videoInputDevices[0].deviceId } };
+                    currentCameraId = videoInputDevices[0].deviceId;
+                }
+            }
+
             try {
-                // Demande l'accès à la caméra de l'utilisateur (frontale)
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
                 webcamFeed.srcObject = stream; // Associe le flux à l'élément vidéo
                 webcamFeed.onloadedmetadata = () => {
                     // Une fois que la vidéo est chargée et que ses métadonnées sont disponibles
@@ -194,16 +299,17 @@
                     console.log(`Canvas dimensions set to: ${photoCanvas.width}x${photoCanvas.height}`);
                 };
             } catch (error) {
-                // Gère les erreurs si l'accès à la webcam est refusé ou impossible
                 console.error("Erreur d'accès à la webcam :", error);
                 alert("Impossible d'accéder à votre webcam. Veuillez vérifier les permissions de votre navigateur et assurez-vous que le site est servi via HTTPS.");
+                // Si l'accès échoue, désactive les boutons liés à la caméra
+                takePhotoBtn.disabled = true;
+                flipCameraBtn.disabled = true;
             }
         }
 
         // Écouteur d'événement pour le bouton "Prendre Photo"
         takePhotoBtn.addEventListener('click', () => {
             if (!stream) {
-                // Empêche de prendre une photo si la webcam n'est pas démarrée
                 alert("La webcam n'est pas démarrée. Veuillez patienter ou recharger la page.");
                 return;
             }
@@ -273,6 +379,24 @@
             downloadBtn.disabled = false; // Active le bouton de téléchargement
         });
 
+        // Écouteur d'événement pour le bouton "Changer de caméra"
+        flipCameraBtn.addEventListener('click', async () => {
+            if (videoInputDevices.length <= 1) {
+                console.log("Moins de 2 caméras disponibles, impossible de changer.");
+                return;
+            }
+
+            // Trouver l'index de la caméra actuelle
+            const currentIndex = videoInputDevices.findIndex(device => device.deviceId === currentCameraId);
+            // Calculer l'index de la prochaine caméra
+            const nextIndex = (currentIndex + 1) % videoInputDevices.length;
+            const nextCamera = videoInputDevices[nextIndex];
+
+            currentCameraId = nextCamera.deviceId; // Met à jour l'ID de la caméra actuelle
+            await startWebcam(currentCameraId); // Démarre la webcam avec la nouvelle caméra
+        });
+
+
         // Écouteur d'événement pour le bouton "Télécharger"
         downloadBtn.addEventListener('click', () => {
             if (photoDataUrl) {
@@ -286,8 +410,11 @@
             }
         });
 
-        // Démarrer la webcam automatiquement au chargement complet de la page
-        window.addEventListener('load', startWebcam);
+        // Démarrer la webcam et énumérer les caméras au chargement complet de la page
+        window.addEventListener('load', async () => {
+            await enumerateCameras(); // Énumère les caméras avant de démarrer
+            await startWebcam(); // Démarre la webcam (utilisera la première ou la frontale par défaut)
+        });
 
         // Arrêter le flux de la webcam lorsque l'utilisateur quitte ou ferme la page
         window.addEventListener('beforeunload', () => {
